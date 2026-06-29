@@ -77,8 +77,8 @@
         # Bootlin vendored-prebuilt spike: prove the PRIMARY (k3/k4/k6) path.
         bootlin-spike = bootlinToolchains."mipseb-k6";
 
-        # The full k6 band (9 Bootlin-covered arches) in one build.
-        bootlin-k6-all = pkgs.linkFarm "bootlin-k6-all"
+        # Every pinned Bootlin cell (k3/k4/k6 × covered arches) in one build.
+        bootlin-all = pkgs.linkFarm "bootlin-all"
           (lib.mapAttrsToList (n: v: { name = n; path = v; }) bootlinToolchains);
 
         default = self.packages.${system}.spike;

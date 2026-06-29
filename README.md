@@ -32,16 +32,25 @@ versions as build targets without rebuilding anything you've seen.
 | `sources.nix` | pinned component / toolchain inputs |
 | `kernel.nix` | `buildKernel { version, arch, src, config }` — auto-resolves the toolchain |
 
-## Status: vendored path proven; matrix not yet filled
+## Status: Bootlin bands pinned & building; from-source fallback still placeholder
 
-- `nix build .#bootlin-spike` **works**: fetches the pinned Bootlin mips32 musl SDK,
-  relocates + autoPatchelfs it, and the result compiles a real ELF MIPS32 binary
-  (gcc 13.3.0). This validates the **primary (vendored Bootlin) sourcing path**.
-- The flake evaluates the full 48-cell musl-cross-make matrix, `resolve` + `toolchainFor`
-  verified — but those cells' `sources.nix` hashes are `fakeSha256` placeholders (the
-  k2.6/from-source fallback path is not built yet).
-- Next: pin the remaining Bootlin tarballs (one per arch × k3/k4/k6) and route the
-  matrix through `mkBootlinToolchain`, leaving only k2.6 on musl-cross-make.
+`nix build .#bootlin-all` builds every pinned Bootlin cell; each runs a `-dumpmachine`
+install-check, and spot-compiles produce correct per-arch ELF (verified ARM/AArch64/PPC64LE/MIPS).
+
+Pinned Bootlin cells (gcc per the release inside, not the release year):
+
+| Band (kernel) | gcc | arches covered by Bootlin |
+|---|---|---|
+| k6 (6.x) | 13.3.0 (2024.05) | all 9 |
+| k4 (4.x/5.x) | 9.3.0 (2020.08); x86_64 = 10.3.0 (2021.11, no older musl) | all 9 |
+| k3 (3.x) | 6.4.0 (2018.02) | 7 — **powerpc, x86_64 deferred** (no gcc-6 musl: their musl starts 2020.08 / 2021.11) |
+
+**Still on placeholders (not built):** the `mk-cross-toolchain.nix` (musl-cross-make) cells —
+i.e. all of **k2.6** (gcc 4.x, every arch) + the modern bands of **mips64eb/mips64el/powerpcle**
++ the deferred **powerpc/x86_64 k3** cells. Their `sources.nix` hashes are `fakeSha256`.
+
+Next: route `matrix.nix` cells through `mkBootlinToolchain` where a pinned Bootlin cell
+exists, else `mkCrossToolchain`; then tackle the musl-cross-make spike (k2.6).
 
 ## Toolchain-sourcing decision (from research, 2026-06-28)
 
