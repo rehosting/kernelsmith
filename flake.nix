@@ -26,6 +26,13 @@
         mcmSrc = musl-cross-make;
       };
 
+      # Primary sourcing path for k3/k4/k6: vendored Bootlin prebuilt toolchains.
+      mkBootlinToolchain = import ./mk-bootlin-toolchain.nix { inherit pkgs; };
+      bootlinSources = import ./bootlin-sources.nix { inherit pkgs; };
+      bootlinToolchains = lib.mapAttrs
+        (name: s: mkBootlinToolchain { inherit name; inherit (s) tarball target crossAlias; })
+        bootlinSources;
+
       # Build one toolchain for an (era, arch) cell.
       cell = eraName: era: archName: arch:
         mkCrossToolchain ({
@@ -66,6 +73,9 @@
 
         # The spike target: prove the hard case (ancient gcc, one arch) first.
         spike = toolchains."k2.6-armel";
+
+        # Bootlin vendored-prebuilt spike: prove the PRIMARY (k3/k4/k6) path.
+        bootlin-spike = bootlinToolchains."mipseb-k6";
 
         default = self.packages.${system}.spike;
       };

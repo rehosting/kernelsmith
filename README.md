@@ -32,10 +32,16 @@ versions as build targets without rebuilding anything you've seen.
 | `sources.nix` | pinned component / toolchain inputs |
 | `kernel.nix` | `buildKernel { version, arch, src, config }` — auto-resolves the toolchain |
 
-## Status: design draft (does not build yet)
+## Status: vendored path proven; matrix not yet filled
 
-The flake **evaluates** (matrix expands to 48 cells; `resolve` + `toolchainFor` verified),
-but `sources.nix` hashes are `fakeSha256` placeholders, so nothing realizes yet.
+- `nix build .#bootlin-spike` **works**: fetches the pinned Bootlin mips32 musl SDK,
+  relocates + autoPatchelfs it, and the result compiles a real ELF MIPS32 binary
+  (gcc 13.3.0). This validates the **primary (vendored Bootlin) sourcing path**.
+- The flake evaluates the full 48-cell musl-cross-make matrix, `resolve` + `toolchainFor`
+  verified — but those cells' `sources.nix` hashes are `fakeSha256` placeholders (the
+  k2.6/from-source fallback path is not built yet).
+- Next: pin the remaining Bootlin tarballs (one per arch × k3/k4/k6) and route the
+  matrix through `mkBootlinToolchain`, leaving only k2.6 on musl-cross-make.
 
 ## Toolchain-sourcing decision (from research, 2026-06-28)
 
@@ -55,12 +61,21 @@ source.** Building old gcc under modern nixpkgs is fragile (gcc 3.x vs modern gl
 kernel (asm-goto, PIE defaults, `-Werror`) are folklore, not cited. Validate each cell's
 upper bound empirically; treat the band table as data to correct, not as ground truth.
 
-**Open question:** does Bootlin's matrix ship gcc old enough (~4.3–4.9) for the 2.6/3.x
-bands, or only modern gcc? Determines how much the musl-cross-make fallback is needed.
+**Bootlin coverage (resolved 2026-06-29):** Bootlin archives every release back to
+**2017.05**, all libc flavors incl. **musl**, for our arches. **Oldest gcc = 5.4.0; no
+gcc 4.x.** Modern end reaches gcc 15.1 (2025.08). So:
+
+| Band | Source |
+|------|--------|
+| k6 / k4 / k3 (gcc ≥5.4) | **vendor Bootlin musl prebuilt** (covers the majority of cells) |
+| **k2.6** (needs gcc 4.x) | **musl-cross-make fallback** — Bootlin has nothing below 5.4 |
+
+2.6 is a real target (RV130 = 2.6.31 ARM), so the fallback band is needed, not hypothetical.
 
 ## Next steps
 
-1. Verify Bootlin's gcc-version coverage for the old (2.6/3.x) bands.
-2. Pivot `sources.nix` → Bootlin `fetchurl` entries; `mk-cross-toolchain.nix` →
-   unpack + `patchelf` derivation (keep musl-cross-make path as fallback).
+1. ~~Verify Bootlin's gcc-version coverage for the old (2.6/3.x) bands.~~ ✅ done above.
+2. Pivot `sources.nix` → Bootlin `fetchurl` entries (mirror to Harbor) for k3/k4/k6;
+   `mk-cross-toolchain.nix` → unpack + `patchelf` derivation. Keep the musl-cross-make
+   path for k2.6 only.
 3. Prove one cell end-to-end (the `spike`), then widen the matrix.
