@@ -59,8 +59,12 @@ toolchain (gcc 5.3.0) that compiles static + dynamic-musl ARM ELF. Findings from
 **Still placeholder (not built):** the other from-source cells — k2.6 for arches other than
 armel, the modern bands of **mips64eb/mips64el/powerpcle**, and deferred **powerpc/x86_64 k3**.
 
-Next: (a) decide the true k2.6 gcc (stable-mcm pin for real 4.x vs accept 5.3.0); (b) fill the
-remaining from-source cells; (c) `buildKernel` against a real 2.6.31 kernel to validate.
+**Decision (2026-06-29):** accept gcc 5.3.0 for k2.6 provisionally; validate against a real
+2.6.31 kernel via `buildKernel`, revisit true gcc-4.x (stable-mcm pin) only if a 2.6 kernel
+actually fails to build.
+
+Next: (a) `buildKernel` against a real 2.6.31 kernel (RV130) to validate gcc 5.3.0 on 2.6.x;
+(b) fill the remaining from-source cells (other-arch k2.6, mips64eb/el, powerpcle, powerpc/x86_64-k3).
 
 ## Toolchain-sourcing decision (from research, 2026-06-28)
 
