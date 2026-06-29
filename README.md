@@ -34,8 +34,10 @@ versions as build targets without rebuilding anything you've seen.
 
 ## Status: Bootlin bands pinned & building; from-source fallback still placeholder
 
-`nix build .#bootlin-all` builds every pinned Bootlin cell; each runs a `-dumpmachine`
+`nix build .#bootlin-all` builds every pinned Bootlin cell (25); each runs a `-dumpmachine`
 install-check, and spot-compiles produce correct per-arch ELF (verified ARM/AArch64/PPC64LE/MIPS).
+`toolchainFor`/`buildKernel` now resolve to the Bootlin cell where pinned, else the
+musl-cross-make fallback — verified: `5.10/mipsel`→Bootlin k4, `2.6.31/armel`→musl-cross-make k2.6.
 
 Pinned Bootlin cells (gcc per the release inside, not the release year):
 

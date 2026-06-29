@@ -42,8 +42,10 @@
           extraConfig = arch.extraConfig or [ ];
         });
 
-      # Cartesian product era x arch, minus the unsupported pairs.
-      toolchains = lib.listToAttrs (lib.flatten (lib.mapAttrsToList
+      # Cartesian product era x arch (musl-cross-make), minus unsupported pairs.
+      # Keyed "<era>-<arch>". Most of these are the FALLBACK path (placeholder
+      # hashes for now); Bootlin cells below override the ones we've vendored.
+      mcmToolchains = lib.listToAttrs (lib.flatten (lib.mapAttrsToList
         (eraName: era:
           lib.mapAttrsToList
             (archName: arch:
@@ -54,6 +56,11 @@
               })
             matrix.arches)
         matrix.eras));
+
+      # Canonical toolchain set: vendored Bootlin where pinned, musl-cross-make
+      # otherwise. Both keyed "<era>-<arch>", so Bootlin simply overrides.
+      toolchains = mcmToolchains // bootlinToolchains;
+
       # The unified entrypoint: (version, arch, src, config) -> kernel, with the
       # toolchain auto-resolved from the version. This is the "move between
       # kernel versions as targets" function.
@@ -67,21 +74,15 @@
       inherit buildKernel toolchainFor;
 
       packages.${system} = toolchains // {
-        # Convenience aggregate: build the whole matrix in one nix build.
-        all = pkgs.linkFarm "cross-toolchains-all"
-          (lib.mapAttrsToList (n: v: { name = n; path = v; }) toolchains);
-
-        # The spike target: prove the hard case (ancient gcc, one arch) first.
-        spike = toolchains."k2.6-armel";
-
-        # Bootlin vendored-prebuilt spike: prove the PRIMARY (k3/k4/k6) path.
-        bootlin-spike = bootlinToolchains."mipseb-k6";
-
-        # Every pinned Bootlin cell (k3/k4/k6 × covered arches) in one build.
+        # Every pinned Bootlin cell (k3/k4/k6 × covered arches) — all buildable now.
         bootlin-all = pkgs.linkFarm "bootlin-all"
           (lib.mapAttrsToList (n: v: { name = n; path = v; }) bootlinToolchains);
 
-        default = self.packages.${system}.spike;
+        # The from-source spike: the hard case (ancient gcc 4.x, k2.6) — the one
+        # genuinely risky build left. Placeholder hashes until tackled.
+        spike = mcmToolchains."k2.6-armel";
+
+        default = self.packages.${system}."k6-mipseb";
       };
 
       # The single environment. `nix develop` here drops you into a shell where
