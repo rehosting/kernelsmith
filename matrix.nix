@@ -10,10 +10,21 @@ rec {
   # Kernel-generation -> compatible tool bundle. The gcc upper-bound per kernel
   # is the hard constraint (e.g. 2.6 will not build under gcc >= 5).
   eras = {
-    # Linux 2.6 / early 3.x
+    # Linux 2.6 / early 3.x — the from-source (musl-cross-make) band.
+    # gcc 5.3.0 is the OLDEST gcc that actually builds with this mcm master:
+    #  - gcc 4.2.1/4.7.4 fail — mcm-master's litecross passes AR_FOR_TARGET=… as
+    #    configure args, which their pre-modern autoconf rejects ("can only
+    #    configure for one host and one target"). True 4.x needs a stable/older
+    #    mcm pin (a follow-up).
+    #  - gcc 5.3.0 has an mcm patch + new-enough autoconf; builds + compiles musl
+    #    ARM (proven). CAVEAT: gcc 5 is above the era-ideal for true 2.6 kernels
+    #    (upper-bound risk: -Werror / dropped dialects) — validate per kernel via
+    #    buildKernel before trusting it on 2.6.x.
+    # (mcm master also ships 2026 musl CVE patches that corrupt 1.1.24 qsort.c;
+    #  mk-cross-toolchain.nix strips them.)
     "k2.6" = {
-      gccVer = "4.9.4"; binutilsVer = "2.27"; muslVer = "1.1.24";
-      gmpVer = "6.1.2"; mpcVer = "1.1.0"; mpfrVer = "4.0.2"; linuxVer = "4.19.317";
+      gccVer = "5.3.0"; binutilsVer = "2.27"; muslVer = "1.1.24";
+      gmpVer = "6.1.2"; mpcVer = "1.1.0"; mpfrVer = "4.0.2"; linuxVer = "4.19.90";
     };
     # 3.x / early 4.x (matches the x86_64-legacy + mips gcc-6.5 stages today)
     "k3" = {

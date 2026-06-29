@@ -47,12 +47,20 @@ Pinned Bootlin cells (gcc per the release inside, not the release year):
 | k4 (4.x/5.x) | 9.3.0 (2020.08); x86_64 = 10.3.0 (2021.11, no older musl) | all 9 |
 | k3 (3.x) | 6.4.0 (2018.02) | 7 — **powerpc, x86_64 deferred** (no gcc-6 musl: their musl starts 2020.08 / 2021.11) |
 
-**Still on placeholders (not built):** the `mk-cross-toolchain.nix` (musl-cross-make) cells —
-i.e. all of **k2.6** (gcc 4.x, every arch) + the modern bands of **mips64eb/mips64el/powerpcle**
-+ the deferred **powerpc/x86_64 k3** cells. Their `sources.nix` hashes are `fakeSha256`.
+**From-source (musl-cross-make) path PROVEN:** `nix build .#spike` builds a k2.6 armel
+toolchain (gcc 5.3.0) that compiles static + dynamic-musl ARM ELF. Findings from the spike:
+- gcc **4.2.1 / 4.7.4 fail** — mcm-master's `litecross` passes `AR_FOR_TARGET=…` as configure
+  args, which pre-modern autoconf rejects. True gcc-4.x needs a **stable/older mcm pin** (TODO).
+- mcm master ships **2026 musl CVE patches that corrupt musl-1.1.24 `qsort.c`**;
+  `mk-cross-toolchain.nix` strips `patches/musl-*/cve-*.diff`.
+- gcc **5.3.0** is the oldest gcc that builds here; it's above the era-ideal for true 2.6
+  kernels (upper-bound risk) — validate per kernel via `buildKernel`.
 
-Next: route `matrix.nix` cells through `mkBootlinToolchain` where a pinned Bootlin cell
-exists, else `mkCrossToolchain`; then tackle the musl-cross-make spike (k2.6).
+**Still placeholder (not built):** the other from-source cells — k2.6 for arches other than
+armel, the modern bands of **mips64eb/mips64el/powerpcle**, and deferred **powerpc/x86_64 k3**.
+
+Next: (a) decide the true k2.6 gcc (stable-mcm pin for real 4.x vs accept 5.3.0); (b) fill the
+remaining from-source cells; (c) `buildKernel` against a real 2.6.31 kernel to validate.
 
 ## Toolchain-sourcing decision (from research, 2026-06-28)
 

@@ -51,8 +51,6 @@ let
     ${lib.optionalString (linuxVer != null) "LINUX_VER = ${linuxVer}"}
     COMMON_CONFIG += --disable-nls --disable-multilib
     GCC_CONFIG += --enable-languages=${languages} --disable-libquadmath --disable-decimal-float
-    # Keep the toolchain relocatable and lean
-    COMMON_CONFIG += CFLAGS="-g0 -O2" CXXFLAGS="-g0 -O2"
     ${lib.concatStringsSep "\n" extraConfig}
   '';
 
@@ -74,6 +72,13 @@ stdenv.mkDerivation {
   enableParallelBuilding = true;
 
   postPatch = ''
+    # This mcm master ships 2026-dated musl CVE patches (e.g.
+    # cve-2026-40200-old.diff) that apply as fuzzy hunks to musl 1.1.24's
+    # qsort.c and corrupt it ("expected identifier before '=='"). They harden
+    # the TARGET musl, not the toolchain build, so drop them. (Revisit if guest
+    # musl hardening matters; better long-term fix is pinning a stable mcm.)
+    rm -f patches/musl-*/cve-*.diff
+
     # Stage pinned tarballs where mcm expects them, skipping its wget step.
     mkdir -p sources
     ${lib.concatStringsSep "\n" (lib.mapAttrsToList
