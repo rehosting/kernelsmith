@@ -72,6 +72,15 @@ gcc 4.x.** Modern end reaches gcc 15.1 (2025.08). So:
 
 2.6 is a real target (RV130 = 2.6.31 ARM), so the fallback band is needed, not hypothetical.
 
+**Per-arch Bootlin coverage (k6 band, found while pinning):** 9 of 12 arches map cleanly to
+a modern Bootlin musl SDK (armel, armhf, arm64, mipseb, mipsel, powerpc, powerpc64,
+powerpc64le, x86_64). Three need musl-cross-make even for modern bands:
+- `powerpcle` — Bootlin has no 32-bit powerpc little-endian variant at all.
+- `mips64el` — Bootlin only ships it as n32 ABI (`mips64el-n32`), not the n64 our target wants.
+- `mips64eb` — the `mips64` dir has musl only at 2017.05 (gcc 5.4); newer releases dropped musl.
+
+So musl-cross-make owns: **all of k2.6 (12 arches) + the modern bands of those 3 arches.**
+
 ## Next steps
 
 1. ~~Verify Bootlin's gcc-version coverage for the old (2.6/3.x) bands.~~ ✅ done above.
