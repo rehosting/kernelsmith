@@ -53,17 +53,28 @@ toolchain (gcc 5.3.0) that compiles static + dynamic-musl ARM ELF. Findings from
   args, which pre-modern autoconf rejects. True gcc-4.x needs a **stable/older mcm pin** (TODO).
 - mcm master ships **2026 musl CVE patches that corrupt musl-1.1.24 `qsort.c`**;
   `mk-cross-toolchain.nix` strips `patches/musl-*/cve-*.diff`.
-- gcc **5.3.0** is the oldest gcc that builds here; it's above the era-ideal for true 2.6
-  kernels (upper-bound risk) — validate per kernel via `buildKernel`.
+- gcc **5.3.0** is the oldest gcc that builds here; above the era-ideal for true 2.6 (upper-bound
+  risk) — **now validated**: builds a real 2.6.31 ARM kernel with three documented era quirks (below).
 
 **Still placeholder (not built):** the other from-source cells — k2.6 for arches other than
 armel, the modern bands of **mips64eb/mips64el/powerpcle**, and deferred **powerpc/x86_64 k3**.
 
-**Decision (2026-06-29):** accept gcc 5.3.0 for k2.6 provisionally; validate against a real
-2.6.31 kernel via `buildKernel`, revisit true gcc-4.x (stable-mcm pin) only if a 2.6 kernel
-actually fails to build.
+**Decision (2026-06-29): VALIDATED — gcc 5.3.0 is viable for k2.6.** `nix-build
+validate-k26.nix` builds a stock **kernel.org 2.6.31** (RV130's generation) ARM `vmlinux`
+end-to-end via `buildKernel`, with the gcc 5.3.0 toolchain auto-resolved from the version.
+Output: `ELF 32-bit LSB executable, ARM, statically linked` (3.8 MB). True gcc-4.x / a
+stable-mcm pin is **not needed** — the gcc-5-on-2.6 breakage is all known, shimmable upper-bound
+stuff, now handled in `kernel.nix`'s k2.6 `eraQuirks`/`postPatch`:
+- **`compiler-gcc5.h: No such file`** — 2.6.x ships only `compiler-gcc{3,4}.h` but
+  `compiler-gcc.h` does `#include compiler-gcc<__GNUC__>.h`. Shim: copy the gcc4 header to
+  `compiler-gcc<major>.h` (pure dispatch, no codegen change).
+- **`multiple definition of pin_inotify_watch`** — gcc 5 defaults to C99 (gnu11) inline; 2.6.x
+  assumes gnu89, so plain-`inline` header funcs emit duplicate external defs. Fix:
+  `-fgnu89-inline` (sed into the top Makefile's `-fno-common` line).
+- **`timeconst.pl: defined(@array)`** — modern host Perl (≥5.22) removed that syntax; sed it out.
 
-Next: (a) `buildKernel` against a real 2.6.31 kernel (RV130) to validate gcc 5.3.0 on 2.6.x;
+Next: (a) build against RV130's *actual* 2.6.31 config (needs the rehosting `linux` branch +
+`linux_builder`, not checked out in this workspace) to confirm firmware-config coverage;
 (b) fill the remaining from-source cells (other-arch k2.6, mips64eb/el, powerpcle, powerpc/x86_64-k3).
 
 ## Toolchain-sourcing decision (from research, 2026-06-28)
