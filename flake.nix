@@ -82,6 +82,12 @@
         # genuinely risky build left. Placeholder hashes until tackled.
         spike = mcmToolchains."k2.6-armel";
 
+        # Every k2.6 cell (the from-source band, gcc 5.3.0) across all 12 arches.
+        # This is the band Bootlin can't supply, so it's all musl-cross-make.
+        k26-all = pkgs.linkFarm "k26-all"
+          (lib.mapAttrsToList (n: _: { name = n; path = mcmToolchains.${n}; })
+            (lib.filterAttrs (n: _: lib.hasPrefix "k2.6-" n) mcmToolchains));
+
         default = self.packages.${system}."k6-mipseb";
       };
 
