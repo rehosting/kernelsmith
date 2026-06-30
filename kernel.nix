@@ -70,7 +70,13 @@ stdenv.mkDerivation {
 
   patches = eraQuirks.patches;
 
-  postPatch = lib.optionalString (config != null) ''cp ${config} .config''
+  postPatch = ''
+    # Kbuild helper scripts carry shebangs like `#!/usr/bin/awk -f` (e.g. 5.10's
+    # scripts/ld-version.sh) that don't exist in the Nix sandbox; without this
+    # they fail "not found" and cascade into Kconfig syntax errors.
+    patchShebangs scripts tools 2>/dev/null || true
+  ''
+    + lib.optionalString (config != null) ''cp ${config} .config''
     + lib.optionalString (eraName == "k2.6") ''
     # 2.6.x ships only compiler-gcc{3,4}.h, but compiler-gcc.h does
     # `#include linux/compiler-gcc<__GNUC__>.h`, so a gcc >= 5 build dies on a
