@@ -12,10 +12,13 @@
   version, # e.g. "3.18.140"
   arch, # matrix arch key, e.g. "mipsel"
   src, # kernel source (fetchurl/fetchgit)
-  config, # .config file
+  config ? null, # a full .config file (mutually exclusive with defconfig)
+  defconfig ? null, # an in-tree config make-target, e.g. "versatile_defconfig"
   archMakeVars ? { }, # ARCH= / CROSS_COMPILE handled below; extra make vars here
   buildModules ? true,
 }:
+assert (config != null) != (defconfig != null) ||
+  throw "buildKernel: pass exactly one of `config` or `defconfig`";
 
 let
   inherit (pkgs) lib stdenv;
@@ -44,6 +47,15 @@ let
     "k6" = { patches = [ ]; extraMake = ""; };
   }.${eraName};
 
+  # Config materialization. A board defconfig target generates .config wholesale
+  # (works on every era). A supplied .config needs normalizing against the tree:
+  # `olddefconfig` only exists from ~2.6.36, so fall back to piped `oldconfig`
+  # on the k2.6 band.
+  configCmd =
+    if defconfig != null then "make $makeFlags ${defconfig}"
+    else if eraName == "k2.6" then ''yes "" | make $makeFlags oldconfig''
+    else "make $makeFlags olddefconfig";
+
 in
 stdenv.mkDerivation {
   pname = "linux-${arch}";
@@ -55,7 +67,7 @@ stdenv.mkDerivation {
 
   patches = eraQuirks.patches;
 
-  postPatch = ''cp ${config} .config'';
+  postPatch = lib.optionalString (config != null) ''cp ${config} .config'';
 
   makeFlags = [
     "ARCH=${kernelArch}"
@@ -66,7 +78,7 @@ stdenv.mkDerivation {
 
   buildPhase = ''
     runHook preBuild
-    make $makeFlags olddefconfig
+    ${configCmd}
     make $makeFlags -j$NIX_BUILD_CORES
     ${lib.optionalString buildModules "make $makeFlags -j$NIX_BUILD_CORES modules"}
     runHook postBuild
