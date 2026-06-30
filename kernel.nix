@@ -56,6 +56,9 @@ let
     else if eraName == "k2.6" then ''yes "" | make $makeFlags oldconfig''
     else "make $makeFlags olddefconfig";
 
+  # gcc major of the resolved toolchain, for the k2.6 header-dispatch shim.
+  gccMajor = lib.versions.major toolchain.gccVer;
+
 in
 stdenv.mkDerivation {
   pname = "linux-${arch}";
@@ -67,7 +70,17 @@ stdenv.mkDerivation {
 
   patches = eraQuirks.patches;
 
-  postPatch = lib.optionalString (config != null) ''cp ${config} .config'';
+  postPatch = lib.optionalString (config != null) ''cp ${config} .config''
+    + lib.optionalString (eraName == "k2.6") ''
+    # 2.6.x ships only compiler-gcc{3,4}.h, but compiler-gcc.h does
+    # `#include linux/compiler-gcc<__GNUC__>.h`, so a gcc >= 5 build dies on a
+    # missing compiler-gcc<MAJOR>.h. Reuse the gcc4 definitions for newer gcc.
+    # This is the upper-bound workaround that makes accepting gcc 5.3.0 viable
+    # on the k2.6 band (pure header dispatch, no codegen change).
+    if [ -f include/linux/compiler-gcc4.h ] && [ ! -f include/linux/compiler-gcc${gccMajor}.h ]; then
+      cp include/linux/compiler-gcc4.h include/linux/compiler-gcc${gccMajor}.h
+    fi
+  '';
 
   makeFlags = [
     "ARCH=${kernelArch}"
