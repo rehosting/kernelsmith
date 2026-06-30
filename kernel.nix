@@ -66,6 +66,7 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [ toolchain ] ++ (with pkgs; [
     gnumake bc bison flex openssl.dev elfutils.dev perl cpio gawk
+    rsync # modern kernels (>= 5.3) shell out to rsync in `headers_install`
   ]);
 
   patches = eraQuirks.patches;
