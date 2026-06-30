@@ -80,6 +80,18 @@ stdenv.mkDerivation {
     if [ -f include/linux/compiler-gcc4.h ] && [ ! -f include/linux/compiler-gcc${gccMajor}.h ]; then
       cp include/linux/compiler-gcc4.h include/linux/compiler-gcc${gccMajor}.h
     fi
+
+    # Modern host Perl (>= 5.22) removed `defined(@array)`; 2.6.x's
+    # kernel/timeconst.pl still uses it and aborts the header-gen step.
+    if [ -f kernel/timeconst.pl ]; then
+      sed -i 's/defined(@\([A-Za-z_][A-Za-z0-9_]*\))/@\1/g' kernel/timeconst.pl
+    fi
+
+    # gcc >= 5 defaults to C99 (gnu11) inline semantics; 2.6.x assumes gnu89,
+    # so plain `inline` funcs in headers (pin_inotify_watch, …) emit a duplicate
+    # external definition per TU -> "multiple definition" at link. Restore gnu89
+    # inline. (-fno-common is stable anchor text in old top-level Makefiles.)
+    sed -i 's/-fno-common/-fno-common -fgnu89-inline/' Makefile
   '';
 
   makeFlags = [

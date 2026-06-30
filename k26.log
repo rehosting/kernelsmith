@@ -1,61 +1,6 @@
 this derivation will be built:
-  /nix/store/28xkv8vwdqwhvpcgjfkhc1zvg33abi8y-linux-armel-2.6.31.drv
-these 27 paths will be fetched (7.3 MiB download, 30.9 MiB unpacked):
-  /nix/store/4d50958yy6kyi5vw9zb9g4zg93biwjw3-bc-1.07.1
-  /nix/store/nmkjwwbqbsa4nx3ljjxrp746kp53by51-brotli-1.1.0-lib
-  /nix/store/wlrnj6fhrhcrjsnv3d9hm9m0mlcxm5k1-cpio-2.15
-  /nix/store/fv1plv85qylnw87dlnxaqkgl06drgr1r-curl-8.7.1
-  /nix/store/zr2gp0yli9vjsqfp28526jcajcivq2ag-dns-root-data-2023-11-27
-  /nix/store/jsizfglsm40vsjc81xnm3wa0rxshpnz0-elfutils-0.191
-  /nix/store/fkf3zfg3wwblksjhiqij4amskigqd1il-elfutils-0.191-bin
-  /nix/store/hmz3a9np7c64frga9nzygiifa7xbpv2x-elfutils-0.191-dev
-  /nix/store/s8q3rch0wd3shdnznz9bcj8mj6pvz1gr-gmp-with-cxx-6.3.0
-  /nix/store/hqll9vi4g6krj2yfxc4vqndvsfssas7x-gnutls-3.8.5
-  /nix/store/fbkbkqb1cp46jwgk2lv6g28ik57r764i-libarchive-3.7.7-lib
-  /nix/store/pm7i9hd073plr28fppi417najx3vx2vv-libevent-2.1.12
-  /nix/store/2vv5dpcgl9hzcpzf1syjnrld69kfhkfm-libkrb5-1.21.3
-  /nix/store/4gzp3wr5mi1k4fvlynci0y7n6qip0kkv-libmicrohttpd-0.9.77
-  /nix/store/apjs9l6fsvv3d6d5dacinrhy8qj57jgx-libpsl-0.21.5
-  /nix/store/jcv2dm4lis9g72qh580am3sg1x9vl80b-libssh2-1.11.0
-  /nix/store/9ll9fqfsdjqwy2ibrnd5sni1mg60lzah-libtasn1-4.19.0
-  /nix/store/ssy9mnlc9pfkdn6msnirki0yfji4nqjv-libxml2-2.12.9
-  /nix/store/9yir03i6l4c3pv54q86k57p50mc3jnh4-nettle-3.9.1
-  /nix/store/j17zmzz6z8fi8rd2yqk36n5jy8whzfhy-nghttp2-1.61.0-lib
-  /nix/store/i6phx7d2fzzjrp9cq3y95ysqn85cj1y4-openssl-3.0.14-bin
-  /nix/store/75qm0pb8hah3i2wa0mgd3l5fyhknr6p3-openssl-3.0.14-dev
-  /nix/store/mk838fcw7xqf597q6milpp400fq2wrb5-p11-kit-0.25.3
-  /nix/store/bmjdb3wc1z2nh78k23p9akgqiabi2way-publicsuffix-list-0-unstable-2024-01-07
-  /nix/store/3qsy89vy65vkvfb331g5msfqc5pbl7vk-setup-debug-info-dirs-hook
-  /nix/store/myr5cqynx2nh0x4f68pprg4jgps9ivcl-unbound-1.20.0-lib
-  /nix/store/c1hff4nzawfkzvjmqn609pfdc3m3dk5z-zstd-1.5.6
-copying path '/nix/store/3qsy89vy65vkvfb331g5msfqc5pbl7vk-setup-debug-info-dirs-hook' from 'https://cache.nixos.org'...
-copying path '/nix/store/4d50958yy6kyi5vw9zb9g4zg93biwjw3-bc-1.07.1' from 'https://cache.nixos.org'...
-copying path '/nix/store/wlrnj6fhrhcrjsnv3d9hm9m0mlcxm5k1-cpio-2.15' from 'https://cache.nixos.org'...
-copying path '/nix/store/i6phx7d2fzzjrp9cq3y95ysqn85cj1y4-openssl-3.0.14-bin' from 'https://cache.nixos.org'...
-copying path '/nix/store/nmkjwwbqbsa4nx3ljjxrp746kp53by51-brotli-1.1.0-lib' from 'https://cache.nixos.org'...
-copying path '/nix/store/zr2gp0yli9vjsqfp28526jcajcivq2ag-dns-root-data-2023-11-27' from 'https://cache.nixos.org'...
-copying path '/nix/store/bmjdb3wc1z2nh78k23p9akgqiabi2way-publicsuffix-list-0-unstable-2024-01-07' from 'https://cache.nixos.org'...
-copying path '/nix/store/c1hff4nzawfkzvjmqn609pfdc3m3dk5z-zstd-1.5.6' from 'https://cache.nixos.org'...
-copying path '/nix/store/2vv5dpcgl9hzcpzf1syjnrld69kfhkfm-libkrb5-1.21.3' from 'https://cache.nixos.org'...
-copying path '/nix/store/ssy9mnlc9pfkdn6msnirki0yfji4nqjv-libxml2-2.12.9' from 'https://cache.nixos.org'...
-copying path '/nix/store/j17zmzz6z8fi8rd2yqk36n5jy8whzfhy-nghttp2-1.61.0-lib' from 'https://cache.nixos.org'...
-copying path '/nix/store/jcv2dm4lis9g72qh580am3sg1x9vl80b-libssh2-1.11.0' from 'https://cache.nixos.org'...
-copying path '/nix/store/s8q3rch0wd3shdnznz9bcj8mj6pvz1gr-gmp-with-cxx-6.3.0' from 'https://cache.nixos.org'...
-copying path '/nix/store/9ll9fqfsdjqwy2ibrnd5sni1mg60lzah-libtasn1-4.19.0' from 'https://cache.nixos.org'...
-copying path '/nix/store/pm7i9hd073plr28fppi417najx3vx2vv-libevent-2.1.12' from 'https://cache.nixos.org'...
-copying path '/nix/store/mk838fcw7xqf597q6milpp400fq2wrb5-p11-kit-0.25.3' from 'https://cache.nixos.org'...
-copying path '/nix/store/apjs9l6fsvv3d6d5dacinrhy8qj57jgx-libpsl-0.21.5' from 'https://cache.nixos.org'...
-copying path '/nix/store/75qm0pb8hah3i2wa0mgd3l5fyhknr6p3-openssl-3.0.14-dev' from 'https://cache.nixos.org'...
-copying path '/nix/store/9yir03i6l4c3pv54q86k57p50mc3jnh4-nettle-3.9.1' from 'https://cache.nixos.org'...
-copying path '/nix/store/fbkbkqb1cp46jwgk2lv6g28ik57r764i-libarchive-3.7.7-lib' from 'https://cache.nixos.org'...
-copying path '/nix/store/fv1plv85qylnw87dlnxaqkgl06drgr1r-curl-8.7.1' from 'https://cache.nixos.org'...
-copying path '/nix/store/myr5cqynx2nh0x4f68pprg4jgps9ivcl-unbound-1.20.0-lib' from 'https://cache.nixos.org'...
-copying path '/nix/store/jsizfglsm40vsjc81xnm3wa0rxshpnz0-elfutils-0.191' from 'https://cache.nixos.org'...
-copying path '/nix/store/hqll9vi4g6krj2yfxc4vqndvsfssas7x-gnutls-3.8.5' from 'https://cache.nixos.org'...
-copying path '/nix/store/4gzp3wr5mi1k4fvlynci0y7n6qip0kkv-libmicrohttpd-0.9.77' from 'https://cache.nixos.org'...
-copying path '/nix/store/fkf3zfg3wwblksjhiqij4amskigqd1il-elfutils-0.191-bin' from 'https://cache.nixos.org'...
-copying path '/nix/store/hmz3a9np7c64frga9nzygiifa7xbpv2x-elfutils-0.191-dev' from 'https://cache.nixos.org'...
-building '/nix/store/28xkv8vwdqwhvpcgjfkhc1zvg33abi8y-linux-armel-2.6.31.drv'...
+  /nix/store/xw4lqxpzl9bjz35c2lzvxhhvpqnqdlgv-linux-armel-2.6.31.drv
+building '/nix/store/xw4lqxpzl9bjz35c2lzvxhhvpqnqdlgv-linux-armel-2.6.31.drv'...
 Running phase: unpackPhase
 unpacking source archive /nix/store/fc8y385vxskvgvdy5a625xf16s622j2h-linux-2.6.31.tar.xz
 source root is linux-2.6.31
@@ -90,17 +35,6 @@ scripts/kallsyms.c: In function 'read_symbol':
 scripts/kallsyms.c:112:25: warning: ignoring return value of 'fgets' declared with attribute 'warn_unused_result' [-Wunused-result]
   112 |                         fgets(str, 500, in);
       |                         ^~~~~~~~~~~~~~~~~~~
-In file included from include/linux/compiler.h:40:0,
-                 from include/linux/stddef.h:4,
-                 from include/linux/posix_types.h:4,
-                 from include/linux/types.h:14,
-                 from include/linux/page-flags.h:8,
-                 from kernel/bounds.c:9:
-include/linux/compiler-gcc.h:86:30: fatal error: linux/compiler-gcc5.h: No such file or directory
-compilation terminated.
-make[1]: *** [/build/linux-2.6.31/./Kbuild:36: kernel/bounds.s] Error 1
-make: *** [Makefile:977: prepare0] Error 2
-make: *** Waiting for unfinished jobs....
 scripts/mod/modpost.c: In function 'get_markers':
 scripts/mod/modpost.c:1562:25: warning: ignoring return value of 'asprintf' declared with attribute 'warn_unused_result' [-Wunused-result]
  1562 |                         asprintf(&line, "%s\t%s\t%s\n", name, mod->name, fmt);
@@ -109,8 +43,1277 @@ scripts/mod/modpost.c: In function 'add_marker':
 scripts/mod/modpost.c:1982:9: warning: ignoring return value of 'asprintf' declared with attribute 'warn_unused_result' [-Wunused-result]
  1982 |         asprintf(&line, "%s\t%s\t%s\n", name, mod->name, fmt);
       |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-error: Cannot build '/nix/store/28xkv8vwdqwhvpcgjfkhc1zvg33abi8y-linux-armel-2.6.31.drv'.
+<stdin>:1351:2: warning: #warning syscall migrate_pages not implemented [-Wcpp]
+<stdin>:1407:2: warning: #warning syscall pselect6 not implemented [-Wcpp]
+<stdin>:1411:2: warning: #warning syscall ppoll not implemented [-Wcpp]
+<stdin>:1451:2: warning: #warning syscall epoll_pwait not implemented [-Wcpp]
+/build/linux-2.6.31/scripts/mkcompile_h: line 66: hostname: command not found
+In file included from include/linux/blkdev.h:12:0,
+                 from init/do_mounts.h:2,
+                 from init/do_mounts_initrd.c:11:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from init/do_mounts.h:2,
+                 from init/do_mounts_rd.c:11:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/nfs_fs.h:45:0,
+                 from init/do_mounts.c:19:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/mempolicy.h:62:0,
+                 from init/main.c:53:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+usr/gen_init_cpio.c: In function 'cpio_mkfile_line':
+usr/gen_init_cpio.c:388:24: warning: '__builtin_strncpy' output may be truncated copying 4096 bytes from a string of length 4096 [-Wstringop-truncation]
+  388 |                        strncpy(new_location, expanded, PATH_MAX);
+      |                        ^
+arch/arm/kernel/signal.c: In function 'restore_sigframe':
+arch/arm/kernel/signal.c:214:30: warning: variable 'aux' set but not used [-Wunused-but-set-variable]
+  struct aux_sigframe __user *aux;
+                              ^
+In file included from include/linux/wait.h:26:0,
+                 from include/linux/mmzone.h:9,
+                 from include/linux/gfp.h:4,
+                 from include/linux/kmod.h:22,
+                 from include/linux/module.h:13,
+                 from arch/arm/kernel/sys_arm.c:15:
+/build/linux-2.6.31/arch/arm/include/asm/current.h:13:18: warning: 'get_current' is static but used in inline function 'do_mmap2' which is not static
+ #define current (get_current())
+                  ^
+arch/arm/kernel/sys_arm.c:59:12: note: in expansion of macro 'current'
+  up_write(&current->mm->mmap_sem);
+            ^
+/build/linux-2.6.31/arch/arm/include/asm/current.h:13:18: warning: 'get_current' is static but used in inline function 'do_mmap2' which is not static
+ #define current (get_current())
+                  ^
+arch/arm/kernel/sys_arm.c:57:14: note: in expansion of macro 'current'
+  down_write(&current->mm->mmap_sem);
+              ^
+In file included from arch/arm/mm/flush.c:12:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from arch/arm/mm/fault-armv.c:18:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+arch/arm/mm/mmu.c: In function 'sanity_check_meminfo':
+arch/arm/mm/mmu.c:690:12: warning: unused variable 'highmem' [-Wunused-variable]
+  int i, j, highmem = 0;
+            ^
+arch/arm/mm/dma-mapping.c: In function '__dma_alloc':
+arch/arm/mm/dma-mapping.c:249:25: warning: array subscript is above array bounds [-Warray-bounds]
+     pte = consistent_pte[++idx];
+                         ^
+arch/arm/mm/alignment.c: In function 'do_alignment':
+arch/arm/mm/alignment.c:284:15: warning: 'offset.un' may be used uninitialized in this function [-Wmaybe-uninitialized]
+   offset.un = -offset.un;
+               ^
+arch/arm/mm/alignment.c:706:21: note: 'offset.un' was declared here
+  union offset_union offset;
+                     ^
+arch/arm/mm/dma-mapping.c: In function 'dma_free_coherent':
+arch/arm/mm/dma-mapping.c:409:25: warning: array subscript is above array bounds [-Warray-bounds]
+    ptep = consistent_pte[++idx];
+                         ^
+arch/arm/nwfpe/softfloat.c: In function 'float32_rem':
+arch/arm/nwfpe/softfloat.c:1349:17: warning: variable 'bSign' set but not used [-Wunused-but-set-variable]
+     flag aSign, bSign, zSign;
+                 ^
+arch/arm/nwfpe/softfloat.c: In function 'float64_rem':
+arch/arm/nwfpe/softfloat.c:2247:17: warning: variable 'bSign' set but not used [-Wunused-but-set-variable]
+     flag aSign, bSign, zSign;
+                 ^
+Can't use 'defined(@array)' (Maybe you should just omit the defined()?) at kernel/timeconst.pl line 373.
+make[1]: *** [/build/linux-2.6.31/kernel/Makefile:133: kernel/timeconst.h] Error 255
+make[1]: *** Waiting for unfinished jobs....
+In file included from include/linux/mempolicy.h:62:0,
+                 from kernel/fork.c:21:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from kernel/ptrace.c:16:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from kernel/sched.c:48:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/mempolicy.h:62:0,
+                 from kernel/exit.c:31:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/nfs_fs.h:45:0,
+                 from kernel/sysctl.c:48:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+kernel/sched.c: In function 'sched_init':
+kernel/sched.c:9176:32: warning: variable 'ptr' set but not used [-Wunused-but-set-variable]
+  unsigned long alloc_size = 0, ptr;
+                                ^
+kernel/sched.c: At top level:
+kernel/sched.c:699:30: warning: 'cpu_of' is static but used in inline function 'update_rq_clock' which is not static
+  rq->clock = sched_clock_cpu(cpu_of(rq));
+                              ^
+In file included from mm/fadvise.c:14:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+kernel/sysctl.c: In function 'do_sysctl':
+kernel/sysctl.c:1780:7: warning: variable 'old_len' set but not used [-Wunused-but-set-variable]
+   int old_len;
+       ^
+In file included from mm/page_alloc.c:21:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from mm/mmap.c:14:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from mm/shmem.c:27:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from mm/madvise.c:9:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from mm/readahead.c:14:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from mm/vmscan.c:19:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from mm/filemap.c:23:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from mm/swap.c:21:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from mm/rmap.c:42:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from mm/mincore.c:11:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from mm/backing-dev.c:5:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from mm/mlock.c:13:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from mm/mempool.c:15:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from mm/highmem.c:23:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from mm/fremap.c:13:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from mm/truncate.c:15:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+mm/mmap.c: In function 'acct_stack_growth':
+mm/mmap.c:1547:16: warning: variable 'new_start' set but not used [-Wunused-but-set-variable]
+  unsigned long new_start;
+                ^
+In file included from mm/page_io.c:15:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from mm/page-writeback.c:21:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+mm/mmap.c: In function 'mmap_init':
+mm/mmap.c:2485:6: warning: variable 'ret' set but not used [-Wunused-but-set-variable]
+  int ret;
+      ^
+In file included from mm/swap_state.c:15:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+mm/filemap.c: In function 'generic_perform_write':
+mm/filemap.c:2237:11: warning: variable 'index' set but not used [-Wunused-but-set-variable]
+   pgoff_t index;  /* Pagecache index for current page */
+           ^
+In file included from include/linux/mempolicy.h:62:0,
+                 from mm/mprotect.c:19:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from mm/memory.c:47:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from mm/swapfile.c:15:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/mempolicy.h:62:0,
+                 from mm/slab.c:111:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/splice.c:22:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+mm/slab.c: In function 'cache_reap':
+mm/slab.c:4070:8: warning: variable 'freed' set but not used [-Wunused-but-set-variable]
+    int freed;
+        ^
+In file included from fs/pipe.c:18:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from fs/super.c:28:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+mm/memory.c: In function 'free_pgd_range':
+mm/memory.c:224:16: warning: variable 'start' set but not used [-Wunused-but-set-variable]
+  unsigned long start;
+                ^
+In file included from fs/namei.c:23:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/sync.c:13:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+fs/splice.c: In function 'default_file_splice_read':
+fs/splice.c:563:10: warning: variable 'index' set but not used [-Wunused-but-set-variable]
+  pgoff_t index;
+          ^
+In file included from include/linux/buffer_head.h:13:0,
+                 from fs/fat/cache.c:12:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/libfs.c:7:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/exec.c:35:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/read_write.c:17:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/buffer_head.h:13:0,
+                 from fs/ioctl.c:17:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/direct-io.c:29:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/cramfs/inode.c:16:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from fs/fs-writeback.c:23:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/open.c:27:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/stat.c:16:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/buffer_head.h:13:0,
+                 from fs/mpage.c:21:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/buffer_head.h:13:0,
+                 from fs/fat/dir.c:19:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/inode.c:21:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/buffer_head.h:13:0,
+                 from fs/ext2/dir.c:25:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from fs/bio.c:21:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/buffer_head.h:13:0,
+                 from fs/ext2/balloc.c:17:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from fs/ioprio.c:24:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from fs/block_dev.c:17:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from fs/buffer.c:28:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/ext2/inode.c:28:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/nfs_fs.h:45:0,
+                 from fs/lockd/clntlock.c:12:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/minix/minix.h:5:0,
+                 from fs/minix/bitmap.c:14:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/buffer_head.h:13:0,
+                 from fs/ext2/ialloc.c:18:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/buffer_head.h:13:0,
+                 from fs/minix/itree_v2.c:1:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/nfs_fs.h:45:0,
+                 from fs/nfs/client.c:28:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/buffer_head.h:13:0,
+                 from fs/minix/itree_v1.c:1:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/partitions/check.h:1:0,
+                 from fs/partitions/msdos.c:23:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+fs/nfsd/nfsproc.c: In function 'nfsd_proc_create':
+fs/nfsd/nfsproc.c:308:7: warning: variable 'is_borc' set but not used [-Wunused-but-set-variable]
+   int is_borc = 0;
+       ^
+In file included from fs/nfsd/nfsctl.c:24:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from include/linux/blktrace_api.h:6,
+                 from fs/partitions/check.c:22:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/ext2/namei.c:33:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/nfsd/vfs.c:33:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/minix/minix.h:5:0,
+                 from fs/minix/namei.c:7:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/proc/task_mmu.c:7:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from fs/ext2/super.c:24:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/proc/array.c:69:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/ramfs/inode.c:28:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/jffs2/file.c:16:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/minix/minix.h:5:0,
+                 from fs/minix/inode.c:14:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/sunrpc/svcauth.h:16:0,
+                 from include/linux/sunrpc/svc.h:18,
+                 from fs/nfsd/export.c:31:
+fs/nfsd/export.c: In function 'expkey_parse':
+include/linux/sunrpc/cache.h:197:5: warning: 'rv' may be used uninitialized in this function [-Wmaybe-uninitialized]
+  if (rv < 0)
+     ^
+include/linux/sunrpc/cache.h:194:6: note: 'rv' was declared here
+  int rv;
+      ^
+In file included from fs/sysfs/inode.c:15:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+fs/jffs2/dir.c: In function 'jffs2_lookup':
+fs/jffs2/dir.c:77:24: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  struct jffs2_sb_info *c;
+                        ^
+fs/jffs2/dir.c: In function 'jffs2_readdir':
+fs/jffs2/dir.c:121:24: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  struct jffs2_sb_info *c;
+                        ^
+fs/nfsd/export.c: In function 'svc_export_parse':
+fs/nfsd/export.c:549:15: warning: 'an_int' may be used uninitialized in this function [-Wmaybe-uninitialized]
+   exp.ex_flags= an_int;
+               ^
+In file included from include/linux/sunrpc/svcauth.h:16:0,
+                 from include/linux/sunrpc/svc.h:18,
+                 from fs/nfsd/export.c:31:
+include/linux/sunrpc/cache.h:197:5: warning: 'rv' may be used uninitialized in this function [-Wmaybe-uninitialized]
+  if (rv < 0)
+     ^
+include/linux/sunrpc/cache.h:194:6: note: 'rv' was declared here
+  int rv;
+      ^
+In file included from fs/sysfs/mount.c:17:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/minix/minix.h:5:0,
+                 from fs/minix/file.c:9:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from fs/fat/fatent.c:9:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/minix/minix.h:5:0,
+                 from fs/minix/dir.c:11:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/nfs_fs.h:45:0,
+                 from fs/lockd/clntproc.c:14:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/buffer_head.h:13:0,
+                 from fs/romfs/storage.c:14:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+fs/notify/inotify/inotify_user.o: In function `pin_inotify_watch':
+inotify_user.c:(.text+0x508): multiple definition of `pin_inotify_watch'
+fs/notify/inotify/inotify_fsnotify.o:inotify_fsnotify.c:(.text+0x1d0): first defined here
+fs/notify/inotify/inotify_user.o: In function `unpin_inotify_watch':
+inotify_user.c:(.text+0x51c): multiple definition of `unpin_inotify_watch'
+fs/notify/inotify/inotify_fsnotify.o:inotify_fsnotify.c:(.text+0x1e4): first defined here
+make[3]: *** [scripts/Makefile.build:295: fs/notify/inotify/built-in.o] Error 1
+make[2]: *** [scripts/Makefile.build:363: fs/notify/inotify] Error 2
+make[1]: *** [scripts/Makefile.build:363: fs/notify] Error 2
+make[1]: *** Waiting for unfinished jobs....
+In file included from include/linux/buffer_head.h:13:0,
+                 from fs/fat/file.c:13:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/mempolicy.h:62:0,
+                 from include/linux/shmem_fs.h:5,
+                 from ipc/shm.c:31:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/fat/inode.c:19:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+ipc/shm.c: In function 'is_file_shm_hugepages':
+ipc/shm.c:301:25: warning: variable 'sfd' set but not used [-Wunused-but-set-variable]
+   struct shm_file_data *sfd;
+                         ^
+In file included from include/linux/nfs_fs.h:45:0,
+                 from fs/nfs/dir.c:29:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/buffer_head.h:13:0,
+                 from fs/fat/misc.c:11:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from fs/romfs/super.c:65:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/buffer_head.h:13:0,
+                 from fs/fat/namei_vfat.c:22:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/nfs_fs.h:45:0,
+                 from fs/nfs/getroot.c:24:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+fs/nfsd/nfsctl.c: In function 'write_ports':
+fs/nfsd/nfsctl.c:968:6: warning: 'fd' may be used uninitialized in this function [-Wmaybe-uninitialized]
+  err = svc_addsock(nfsd_serv, fd, buf, SIMPLE_TRANSACTION_LIMIT);
+      ^
+fs/nfsd/nfsctl.c:954:6: note: 'fd' was declared here
+  int fd, err;
+      ^
+In file included from fs/binfmt_elf.c:29:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/nfs_fs.h:45:0,
+                 from fs/nfs/file.c:24:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+fs/binfmt_elf.c: In function 'load_elf_binary':
+fs/binfmt_elf.c:577:16: warning: variable 'reloc_func_desc' set but not used [-Wunused-but-set-variable]
+  unsigned long reloc_func_desc = 0;
+                ^
+In file included from fs/jffs2/readinode.c:17:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/jffs2/read.c:15:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/nfs_fs.h:45:0,
+                 from fs/nfs/inode.c:29:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/nfs_fs.h:45:0,
+                 from fs/nfs/super.c:38:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/nfs/nfs2xdr.c:20:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/nfs_fs.h:45:0,
+                 from fs/nfs/unlink.c:13:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/nfs/direct.c:45:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/jffs2/write.c:16:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/nfs/read.c:17:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/nfs/write.c:12:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/nfs_page.h:14:0,
+                 from fs/nfs/pagelist.c:18:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+fs/nfs/nfs2xdr.c: In function 'nfs_xdr_readdirres':
+fs/nfs/nfs2xdr.c:431:24: warning: variable 'kaddr' set but not used [-Wunused-but-set-variable]
+  __be32 *end, *entry, *kaddr;
+                        ^
+In file included from fs/jffs2/nodelist.c:19:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/jffs2/scan.c:16:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/nfs/proc.c:39:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/jffs2/gc.c:15:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/nfs_fs.h:45:0,
+                 from fs/nfs/mount_clnt.c:16:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/nfs_fs.h:45:0,
+                 from fs/nfs/namespace.c:13:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/nfs_fs.h:45:0,
+                 from fs/nfs/sysctl.c:14:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/nfs_fs.h:45:0,
+                 from fs/nfs/symlink.c:18:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/jffs2/debug.c:14:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from security/commoncap.c:19:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/jffs2/super.c:22:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+fs/jffs2/writev.c: In function 'jffs2_flash_direct_write':
+fs/jffs2/writev.c:67:15: warning: variable 'vecs' set but not used [-Wunused-but-set-variable]
+   struct kvec vecs[1];
+               ^
+In file included from fs/jffs2/erase.c:18:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/nfs_fs.h:45:0,
+                 from fs/nfs/nfsroot.c:79:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/nfs_fs.h:45:0,
+                 from fs/nfs/nfs3proc.c:16:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/jffs2/fs.c:18:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from fs/nfs/nfs3xdr.c:17:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+fs/nfs/nfs3xdr.c: In function 'nfs3_xdr_readdirres':
+fs/nfs/nfs3xdr.c:511:24: warning: variable 'kaddr' set but not used [-Wunused-but-set-variable]
+  __be32 *entry, *end, *kaddr;
+                        ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/blk-tag.c:7:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/elevator.c:27:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/blk-barrier.c:7:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/genhd.c:10:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/bsg.c:15:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/ioctl.c:2:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/as-iosched.c:10:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/blk-core.c:18:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/blk-sysfs.c:7:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/blk-settings.c:8:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/noop-iosched.c:4:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/blk-merge.c:7:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/blk-timeout.c:6:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+block/blk-merge.c: In function '__blk_recalc_rq_segments':
+block/blk-merge.c:15:15: warning: variable 'phys_size' set but not used [-Wunused-but-set-variable]
+  unsigned int phys_size;
+               ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/cfq-iosched.c:10:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/blk-ioc.c:8:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/blk-softirq.c:8:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+block/blk-core.c: In function 'blk_account_io_completion':
+block/blk-core.c:1661:7: warning: variable 'cpu' set but not used [-Wunused-but-set-variable]
+   int cpu;
+       ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/scsi_ioctl.c:23:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/deadline-iosched.c:8:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/blk-map.c:7:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from block/blk-exec.c:7:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from drivers/mmc/core/host.c:17:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+drivers/serial/8250.c: In function 'serial8250_interrupt':
+drivers/serial/8250.c:1586:17: warning: variable 'status' set but not used [-Wunused-but-set-variable]
+    unsigned int status;
+                 ^
+drivers/i2c/i2c-core.c: In function 'i2c_register_adapter':
+drivers/i2c/i2c-core.c:543:15: warning: variable 'dummy' set but not used [-Wunused-but-set-variable]
+  int res = 0, dummy;
+               ^
+In file included from include/linux/blkdev.h:12:0,
+                 from drivers/mmc/card/block.c:29:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from drivers/block/brd.c:15:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from drivers/mmc/core/core.c:19:0:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+In file included from include/linux/blkdev.h:12:0,
+                 from drivers/mmc/card/queue.c:13:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+drivers/net/smc91x.c: In function 'smc_hardware_send_pkt':
+drivers/net/smc91x.c:553:16: warning: unused variable 'flags' [-Wunused-variable]
+  unsigned long flags;
+                ^
+drivers/net/smc91x.c: In function 'smc_hard_start_xmit':
+drivers/net/smc91x.c:639:16: warning: unused variable 'flags' [-Wunused-variable]
+  unsigned long flags;
+                ^
+drivers/net/smc91x.c: In function 'smc_tx':
+drivers/net/smc91x.c:711:51: warning: variable 'pkt_len' set but not used [-Wunused-but-set-variable]
+  unsigned int saved_packet, packet_no, tx_status, pkt_len;
+                                                   ^
+drivers/net/smc91x.c: In function 'smc_phy_configure':
+drivers/net/smc91x.c:1046:6: warning: variable 'status' set but not used [-Wunused-but-set-variable]
+  int status;
+      ^
+drivers/char/vt.c: In function 'vc_do_resize':
+drivers/char/vt.c:826:49: warning: variable 'old_screen_size' set but not used [-Wunused-but-set-variable]
+  unsigned int old_cols, old_rows, old_row_size, old_screen_size;
+                                                 ^
+drivers/char/vt.c:826:15: warning: variable 'old_cols' set but not used [-Wunused-but-set-variable]
+  unsigned int old_cols, old_rows, old_row_size, old_screen_size;
+               ^
+drivers/char/vt.c: In function 'do_con_write':
+drivers/char/vt.c:2114:6: warning: variable 'orig_count' set but not used [-Wunused-but-set-variable]
+  int orig_count;
+      ^
+drivers/char/vt.c:2113:23: warning: variable 'orig_buf' set but not used [-Wunused-but-set-variable]
+  const unsigned char *orig_buf = NULL;
+                       ^
+In file included from include/linux/buffer_head.h:13:0,
+                 from drivers/char/sysrq.c:33:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+make: *** [Makefile:873: kernel] Error 2
+make: *** Waiting for unfinished jobs....
+drivers/base/module.c: In function 'module_add_driver':
+drivers/base/module.c:37:6: warning: variable 'no_warn' set but not used [-Wunused-but-set-variable]
+  int no_warn;
+      ^
+In file included from include/linux/blkdev.h:12:0,
+                 from drivers/mtd/mtd_blkdevs.c:15:
+include/linux/pagemap.h: In function 'fault_in_pages_readable':
+include/linux/pagemap.h:413:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+  volatile char c;
+                ^
+drivers/video/console/fbcon.c: In function 'fb_flashcursor':
+drivers/video/console/fbcon.c:371:18: warning: variable 'p' set but not used [-Wunused-but-set-variable]
+  struct display *p;
+                  ^
+drivers/video/console/fbcon.c: In function 'fbcon_exit':
+drivers/video/console/fbcon.c:3432:7: warning: variable 'pending' set but not used [-Wunused-but-set-variable]
+   int pending;
+       ^
+make: *** [Makefile:873: fs] Error 2
+In file included from drivers/mtd/chips/cfi_util.c:23:0:
+drivers/mtd/chips/cfi_util.c: In function 'cfi_qry_present':
+include/linux/mtd/map.h:258:6: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+   if (val1.x[i] != val2.x[i])
+      ^
+In file included from drivers/mtd/chips/cfi_util.c:23:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+In file included from drivers/mtd/chips/cfi_util.c:23:0:
+include/linux/mtd/map.h:258:6: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+   if (val1.x[i] != val2.x[i])
+      ^
+In file included from drivers/mtd/chips/cfi_util.c:23:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+In file included from drivers/mtd/chips/cfi_util.c:23:0:
+include/linux/mtd/map.h:258:6: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+   if (val1.x[i] != val2.x[i])
+      ^
+In file included from drivers/mtd/chips/cfi_util.c:23:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+In file included from include/linux/mtd/cfi.h:14:0,
+                 from drivers/mtd/chips/cfi_probe.c:18:
+drivers/mtd/chips/cfi_probe.c: In function 'cfi_probe_chip':
+include/linux/mtd/cfi_endian.h:48:25: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+ #define cfi32_to_cpu(x) (x)
+                         ^
+In file included from drivers/mtd/chips/cfi_probe.c:17:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+In file included from include/linux/mtd/cfi.h:14:0,
+                 from drivers/mtd/chips/cfi_probe.c:18:
+include/linux/mtd/cfi_endian.h:48:25: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+ #define cfi32_to_cpu(x) (x)
+                         ^
+In file included from drivers/mtd/chips/cfi_probe.c:17:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+In file included from include/linux/mtd/cfi.h:14:0,
+                 from drivers/mtd/chips/cfi_probe.c:18:
+include/linux/mtd/cfi_endian.h:48:25: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+ #define cfi32_to_cpu(x) (x)
+                         ^
+In file included from drivers/mtd/chips/cfi_probe.c:17:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+In file included from include/linux/mtd/cfi.h:14:0,
+                 from drivers/mtd/chips/cfi_probe.c:18:
+include/linux/mtd/cfi_endian.h:48:25: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+ #define cfi32_to_cpu(x) (x)
+                         ^
+In file included from drivers/mtd/chips/cfi_probe.c:17:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+In file included from include/linux/mtd/cfi.h:14:0,
+                 from drivers/mtd/chips/cfi_probe.c:18:
+include/linux/mtd/cfi_endian.h:48:25: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+ #define cfi32_to_cpu(x) (x)
+                         ^
+In file included from drivers/mtd/chips/cfi_probe.c:17:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+In file included from include/linux/mtd/cfi.h:14:0,
+                 from drivers/mtd/chips/cfi_probe.c:18:
+include/linux/mtd/cfi_endian.h:48:25: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+ #define cfi32_to_cpu(x) (x)
+                         ^
+In file included from drivers/mtd/chips/cfi_probe.c:17:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+In file included from include/linux/mtd/cfi.h:14:0,
+                 from drivers/mtd/chips/cfi_util.c:24:
+drivers/mtd/chips/cfi_util.c: In function 'cfi_read_pri':
+include/linux/mtd/cfi_endian.h:48:25: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+ #define cfi32_to_cpu(x) (x)
+                         ^
+In file included from drivers/mtd/chips/cfi_util.c:23:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+sound/core/init.c: In function 'snd_card_disconnect':
+sound/core/init.c:337:15: warning: variable 'file' set but not used [-Wunused-but-set-variable]
+  struct file *file;
+               ^
+sound/core/pcm_native.c: In function 'snd_pcm_drop':
+sound/core/pcm_native.c:1532:19: warning: variable 'card' set but not used [-Wunused-but-set-variable]
+  struct snd_card *card;
+                   ^
+sound/core/pcm_native.c: In function 'snd_pcm_open_file':
+sound/core/pcm_native.c:2068:22: warning: variable 'str' set but not used [-Wunused-but-set-variable]
+  struct snd_pcm_str *str;
+                      ^
+sound/core/control.c: In function 'snd_ctl_elem_list':
+sound/core/control.c:580:30: warning: variable 'first' set but not used [-Wunused-but-set-variable]
+  unsigned int offset, space, first, jidx;
+                              ^
+sound/core/vmaster.c: In function 'slave_update':
+sound/core/vmaster.c:60:6: warning: variable 'err' set but not used [-Wunused-but-set-variable]
+  int err, ch;
+      ^
+sound/core/oss/linear.c: In function 'linear_transfer':
+sound/core/oss/linear.c:93:22: warning: variable 'data' set but not used [-Wunused-but-set-variable]
+  struct linear_priv *data;
+                      ^
+In file included from include/linux/mtd/cfi.h:14:0,
+                 from drivers/mtd/chips/cfi_cmdset_0001.c:38:
+drivers/mtd/chips/cfi_cmdset_0001.c: In function 'do_getlockstatus_oneblock':
+include/linux/mtd/cfi_endian.h:48:25: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+ #define cfi32_to_cpu(x) (x)
+                         ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:35:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:35:0:
+drivers/mtd/chips/cfi_cmdset_0001.c: In function 'chip_ready':
+include/linux/mtd/map.h:270:22: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+   r.x[i] = val1.x[i] & val2.x[i];
+                      ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:35:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:35:0:
+include/linux/mtd/map.h:270:22: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+   r.x[i] = val1.x[i] & val2.x[i];
+                      ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:35:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:35:0:
+drivers/mtd/chips/cfi_cmdset_0001.c: In function 'inval_cache_and_wait_for_operation':
+include/linux/mtd/map.h:270:22: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+   r.x[i] = val1.x[i] & val2.x[i];
+                      ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:35:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:38:0:
+drivers/mtd/chips/cfi_cmdset_0001.c: In function 'cfi_intelext_writev':
+include/linux/mtd/cfi.h:411:7: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+   res |= (onestat >> (chip_mode * 16));
+       ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:35:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+drivers/mtd/chips/cfi_cmdset_0001.c:1693:3: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+   printk(KERN_ERR "%s: Chip not ready for buffer write. Xstatus = %lx, status = %lx\n",
+   ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:35:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+drivers/mtd/chips/cfi_cmdset_0001.c:1693:3: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+   printk(KERN_ERR "%s: Chip not ready for buffer write. Xstatus = %lx, status = %lx\n",
+   ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:35:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:35:0:
+include/linux/mtd/map.h:304:17: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+   if (val1.x[i] & val2.x[i])
+                 ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:35:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:38:0:
+drivers/mtd/chips/cfi_cmdset_0001.c: In function 'do_erase_oneblock':
+include/linux/mtd/cfi.h:411:7: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+   res |= (onestat >> (chip_mode * 16));
+       ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:35:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:38:0:
+drivers/mtd/chips/cfi_cmdset_0001.c: In function 'do_write_oneword.constprop':
+include/linux/mtd/cfi.h:411:7: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+   res |= (onestat >> (chip_mode * 16));
+       ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:35:0:
+include/linux/mtd/map.h:375:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+In file included from drivers/mtd/chips/cfi_cmdset_0001.c:35:0:
+drivers/mtd/chips/cfi_cmdset_0001.c: In function 'cfi_intelext_write_words':
+include/linux/mtd/map.h:327:9: warning: 'r.x[0]' may be used uninitialized in this function [-Wmaybe-uninitialized]
+  return r;
+         ^
+include/linux/mtd/map.h:312:11: note: 'r.x[0]' was declared here
+  map_word r;
+           ^
+error: Cannot build '/nix/store/xw4lqxpzl9bjz35c2lzvxhhvpqnqdlgv-linux-armel-2.6.31.drv'.
        Reason: builder failed with exit code 2.
        Output paths:
-         /nix/store/f04rn3q29mkm8farvfkccz93rnv4a9ik-linux-armel-2.6.31
+         /nix/store/mcfcjq69mx9kw75x4771c35zal1vk3hn-linux-armel-2.6.31
 EXIT=100
