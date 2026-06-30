@@ -79,11 +79,23 @@ stuff, now handled in `kernel.nix`'s k2.6 `eraQuirks`/`postPatch`:
   `-fgnu89-inline` (sed into the top Makefile's `-fno-common` line).
 - **`timeconst.pl: defined(@array)`** — modern host Perl (≥5.22) removed that syntax; sed it out.
 
+**`buildKernel` VALIDATED ACROSS ALL BANDS (2026-06-30):** `nix build -f validate-bands.nix all`
+builds a stock kernel per modern era to a correct-arch `vmlinux`, exercising both sourcing paths:
+- **k3-mipsel** 3.18.140 `malta_defconfig` — Bootlin k3 (gcc 6.4) → MIPS32 rel2 ELF
+- **k3-x86_64** 3.18.140 `x86_64_defconfig` — **from-source** mcm gcc 6.5.0 → x86-64 ELF
+- **k4-arm64** 5.10 `defconfig` — Bootlin k4 (gcc 9.3) → AArch64 PIE ELF
+- **k6-x86_64** 6.6 `x86_64_defconfig` — Bootlin k6 (gcc 13.3) → x86-64 ELF
+
+(plus k2.6 2.6.31/armel from `validate-k26.nix`.) Two general `buildKernel` fixes fell out:
+`patchShebangs scripts tools` (5.10's `scripts/ld-version.sh` has a `#!/usr/bin/awk` shebang absent
+in the sandbox) and adding **rsync** to `nativeBuildInputs` (kernels ≥5.3 shell out to it in
+`headers_install`).
+
 Next: (a) build against RV130's *actual* 2.6.31 config (needs the rehosting `linux` branch +
 `linux_builder`, not checked out in this workspace) to confirm firmware-config coverage;
-(b) ~~fill the remaining from-source cells~~ ✅ done (`.#k26-all` + `.#fromsource-extra`);
+(b) link a real guest userland (busybox/libnvram) to prove the musl libs, not just codegen;
 (c) mirror the Bootlin tarballs + the GNU/musl/kernel.org component tarballs to Harbor
-(upstream pins are not "reproducible forever"); (d) exercise `buildKernel` on a k3/k4/k6 kernel.
+(upstream pins are not "reproducible forever"); (d) wire a real consumer (linux_builder/igloo_driver).
 
 ## Toolchain-sourcing decision (from research, 2026-06-28)
 
