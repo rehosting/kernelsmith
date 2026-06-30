@@ -26,20 +26,28 @@ rec {
       gccVer = "5.3.0"; binutilsVer = "2.27"; muslVer = "1.1.24";
       gmpVer = "6.1.2"; mpcVer = "1.1.0"; mpfrVer = "4.0.2"; linuxVer = "4.19.90";
     };
-    # 3.x / early 4.x (matches the x86_64-legacy + mips gcc-6.5 stages today)
+    # NOTE: the from-source (musl-cross-make) cells below only get built for the
+    # arches Bootlin can't supply (mips64eb/el, powerpcle at every modern band;
+    # powerpc/x86_64 at k3) — Bootlin toolchains override the rest. Every version
+    # here is reconciled to musl-cross-make's blessed hashes/ set (mcm refuses to
+    # build a component version it has no .sha1 for). linuxVer = 4.19.90 across
+    # the modern eras: it only supplies kernel *headers* to the libc, so the exact
+    # version is immaterial and 4.19.90 is already pinned + mcm-blessed.
+
+    # 3.x / early 4.x — gcc 6.5.0 (reuses the k2.6 support-lib set)
     "k3" = {
       gccVer = "6.5.0"; binutilsVer = "2.27"; muslVer = "1.1.24";
-      gmpVer = "6.1.2"; mpcVer = "1.1.0"; mpfrVer = "4.0.2"; linuxVer = "4.19.317";
+      gmpVer = "6.1.2"; mpcVer = "1.1.0"; mpfrVer = "4.0.2"; linuxVer = "4.19.90";
     };
     # 4.x / 5.x  (the current default era)
     "k4" = {
       gccVer = "9.4.0"; binutilsVer = "2.33.1"; muslVer = "1.2.4";
-      gmpVer = "6.1.2"; mpcVer = "1.1.0"; mpfrVer = "4.0.2"; linuxVer = "4.19.317";
+      gmpVer = "6.1.2"; mpcVer = "1.1.0"; mpfrVer = "4.0.2"; linuxVer = "4.19.90";
     };
-    # 6.x
+    # 6.x  (gcc 13.3.0 — mcm blesses .3, not the .2 in the era-ideal)
     "k6" = {
-      gccVer = "13.2.0"; binutilsVer = "2.41"; muslVer = "1.2.4";
-      gmpVer = "6.2.1"; mpcVer = "1.3.1"; mpfrVer = "4.2.1"; linuxVer = "4.19.317";
+      gccVer = "13.3.0"; binutilsVer = "2.44"; muslVer = "1.2.4";
+      gmpVer = "6.3.0"; mpcVer = "1.3.1"; mpfrVer = "4.2.2"; linuxVer = "4.19.90";
     };
   };
 

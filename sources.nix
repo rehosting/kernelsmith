@@ -7,10 +7,13 @@
 # extensions below mirror mcm's hashes/ entries: gcc/binutils/gmp/mpfr=bz2,
 # musl/mpc=gz, linux=xz.
 #
-# Currently only the k2.6 era (gcc 4.7.4) is pinned with real hashes — that's the
-# one band Bootlin can't supply (no gcc < 5.4). The other from-source cells
-# (mips64eb/el/powerpcle modern bands, powerpc/x86_64 k3) are Bootlin-uncovered
-# TODOs; add their component versions here when tackled.
+# All four eras are pinned with real hashes. Every version here is one that
+# musl-cross-make ships a hashes/<pkg-ver>.sha1 for — mcm refuses to build a
+# component it has no blessed hash for, so the matrix versions are reconciled to
+# mcm's blessed set (see matrix.nix). The k2.6 band (gcc 5.3.0) is the one
+# Bootlin can't supply; the k3/k4/k6 component sets here back the Bootlin-
+# uncovered cells only (mips64eb/el, powerpcle at every modern band; powerpc and
+# x86_64 at k3) — covered cells use the vendored Bootlin toolchains instead.
 { pkgs }:
 let
   inherit (pkgs) fetchurl;
@@ -49,5 +52,47 @@ in
   "linux-4.19.90" = fetchurl {
     url = "https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.19.90.tar.xz";
     sha256 = "sha256-KdhsCm2vFp7AtLQqEvjVXciUxSvZAfh29SoFkGpc9/0=";
+  };
+
+  # ---- k3 era (gcc 6.5.0): reuses the k2.6 binutils/musl/gmp/mpc/mpfr/linux ----
+  "gcc-6.5.0" = fetchurl {
+    url = gnu "gcc/gcc-6.5.0/gcc-6.5.0.tar.xz";
+    sha256 = "sha256-fvF5bOSX6JR5GDcCY1sUu3pGtTJJIJpeD5mb6/R0CUU=";
+  };
+
+  # ---- k4 era (gcc 9.4.0, binutils 2.33.1, musl 1.2.4) ----
+  "gcc-9.4.0" = fetchurl {
+    url = gnu "gcc/gcc-9.4.0/gcc-9.4.0.tar.xz";
+    sha256 = "sha256-yV2jL0QDeNd1HdlVMxhvf8Bc60+2XrW4UjTmKZ65g44=";
+  };
+  "binutils-2.33.1" = fetchurl {
+    url = gnu "binutils/binutils-2.33.1.tar.xz";
+    sha256 = "sha256-q2b8LRw+wDWbjgiEPJ8ztj6HB+/f9eTMXCAOriRyLL8=";
+  };
+  "musl-1.2.4" = fetchurl {
+    url = "https://musl.libc.org/releases/musl-1.2.4.tar.gz";
+    sha256 = "sha256-ejXq4z1TcqfA2hGI3nmHJvaIJVE7euPr6XqqpSEU8Dk=";
+  };
+
+  # ---- k6 era (gcc 13.3.0, binutils 2.44, gmp 6.3.0, mpc 1.3.1, mpfr 4.2.2) ----
+  "gcc-13.3.0" = fetchurl {
+    url = gnu "gcc/gcc-13.3.0/gcc-13.3.0.tar.xz";
+    sha256 = "sha256-CEXpYhyVQ6E/SE6UWEpJ/8ASmXDpkUYkI1/B0GGgwIM=";
+  };
+  "binutils-2.44" = fetchurl {
+    url = gnu "binutils/binutils-2.44.tar.gz";
+    sha256 = "sha256-DN12d3oN/T3Tpj8hXwMCCN25HCNh0rzAKs7A8cFrai4=";
+  };
+  "gmp-6.3.0" = fetchurl {
+    url = gnu "gmp/gmp-6.3.0.tar.xz";
+    sha256 = "sha256-o8K4AgG4nmhhb0rTC8Zq7kknw85Q4zkpyoGdXENTiJg=";
+  };
+  "mpc-1.3.1" = fetchurl {
+    url = gnu "mpc/mpc-1.3.1.tar.gz";
+    sha256 = "sha256-q2QkkvXPiCt0qgy3MM1BCoHtzb7IlRg86TDnBsHHWbg=";
+  };
+  "mpfr-4.2.2" = fetchurl {
+    url = gnu "mpfr/mpfr-4.2.2.tar.xz";
+    sha256 = "sha256-tnugOD736KhWNzTi6InvXsPDuJigHQD6CmhprYHGzgE=";
   };
 }

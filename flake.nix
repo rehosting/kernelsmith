@@ -88,6 +88,17 @@
           (lib.mapAttrsToList (n: _: { name = n; path = mcmToolchains.${n}; })
             (lib.filterAttrs (n: _: lib.hasPrefix "k2.6-" n) mcmToolchains));
 
+        # The Bootlin-uncovered MODERN cells: musl-cross-make is the only source.
+        # mips64eb/el + powerpcle at every modern band (no Bootlin musl for them),
+        # plus powerpc/x86_64 at k3 (Bootlin's musl for those starts too late).
+        # Pulled from the canonical `toolchains` set, which is mcm here since
+        # Bootlin doesn't override these keys.
+        fromsource-extra = pkgs.linkFarm "fromsource-extra" (map
+          (k: { name = k; path = toolchains.${k}; })
+          ([ "k3-mips64eb" "k3-mips64el" "k3-powerpcle" "k3-powerpc" "k3-x86_64"
+             "k4-mips64eb" "k4-mips64el" "k4-powerpcle"
+             "k6-mips64eb" "k6-mips64el" "k6-powerpcle" ]));
+
         default = self.packages.${system}."k6-mipseb";
       };
 
