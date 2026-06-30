@@ -32,7 +32,7 @@ versions as build targets without rebuilding anything you've seen.
 | `sources.nix` | pinned component / toolchain inputs |
 | `kernel.nix` | `buildKernel { version, arch, src, config }` — auto-resolves the toolchain |
 
-## Status: Bootlin bands pinned & building; from-source fallback still placeholder
+## Status: full matrix building — Bootlin bands pinned + from-source matrix filled
 
 `nix build .#bootlin-all` builds every pinned Bootlin cell (25); each runs a `-dumpmachine`
 install-check, and spot-compiles produce correct per-arch ELF (verified ARM/AArch64/PPC64LE/MIPS).
@@ -56,8 +56,14 @@ toolchain (gcc 5.3.0) that compiles static + dynamic-musl ARM ELF. Findings from
 - gcc **5.3.0** is the oldest gcc that builds here; above the era-ideal for true 2.6 (upper-bound
   risk) — **now validated**: builds a real 2.6.31 ARM kernel with three documented era quirks (below).
 
-**Still placeholder (not built):** the other from-source cells — k2.6 for arches other than
-armel, the modern bands of **mips64eb/mips64el/powerpcle**, and deferred **powerpc/x86_64 k3**.
+**From-source matrix FILLED (2026-06-29):**
+- `nix build .#k26-all` — **all 12 k2.6 cells** build under gcc 5.3.0 (the band Bootlin can't
+  supply). Spot-compiles confirm correct per-arch ELF, *including* the 3 arches Bootlin lacks at
+  any band: powerpcle (32-bit PPC-LE), mips64eb, mips64el.
+- `nix build .#fromsource-extra` — the **Bootlin-uncovered modern cells**: mips64eb/el + powerpcle
+  at k3/k4/k6, plus powerpc/x86_64 at k3 (11 cells). gcc 6.5.0 (k3) / 9.4.0 (k4) / 13.3.0 (k6).
+- All mcm component versions are reconciled to musl-cross-make's blessed `hashes/` set (it refuses
+  to build a version it has no `.sha1` for). So the from-source band now has zero placeholder hashes.
 
 **Decision (2026-06-29): VALIDATED — gcc 5.3.0 is viable for k2.6.** `nix-build
 validate-k26.nix` builds a stock **kernel.org 2.6.31** (RV130's generation) ARM `vmlinux`
@@ -75,7 +81,9 @@ stuff, now handled in `kernel.nix`'s k2.6 `eraQuirks`/`postPatch`:
 
 Next: (a) build against RV130's *actual* 2.6.31 config (needs the rehosting `linux` branch +
 `linux_builder`, not checked out in this workspace) to confirm firmware-config coverage;
-(b) fill the remaining from-source cells (other-arch k2.6, mips64eb/el, powerpcle, powerpc/x86_64-k3).
+(b) ~~fill the remaining from-source cells~~ ✅ done (`.#k26-all` + `.#fromsource-extra`);
+(c) mirror the Bootlin tarballs + the GNU/musl/kernel.org component tarballs to Harbor
+(upstream pins are not "reproducible forever"); (d) exercise `buildKernel` on a k3/k4/k6 kernel.
 
 ## Toolchain-sourcing decision (from research, 2026-06-28)
 
