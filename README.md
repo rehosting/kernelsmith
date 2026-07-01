@@ -94,8 +94,25 @@ in the sandbox) and adding **rsync** to `nativeBuildInputs` (kernels ≥5.3 shel
 Next: (a) build against a *real* firmware kernel config (needs the rehosting `linux` branch +
 `linux_builder`, not checked out in this workspace) to confirm firmware-config coverage;
 (b) link a real guest userland (busybox/libnvram) to prove the musl libs, not just codegen;
-(c) mirror the Bootlin tarballs + the GNU/musl/kernel.org component tarballs to Harbor
-(upstream pins are not "reproducible forever"); (d) wire a real consumer (linux_builder/igloo_driver).
+(c) ~~mirror the pinned tarballs~~ ✅ **wired** — see "Tarball mirror" below; remaining is to
+populate a mirror host and set `base`; (d) wire a real consumer (linux_builder/igloo_driver).
+
+## Tarball mirror (reproducibility)
+
+Every pinned tarball (mcm components in `sources.nix`, Bootlin SDKs in `bootlin-sources.nix`)
+is fetched **mirror-first, upstream-fallback** via `mirror.nix`: `fetchurl { urls = [ <mirror>
+<upstream> ]; }`. The sha256 guarantees identical bytes whichever wins, so the mirror needs no
+separate trust. Upstream pins are not "reproducible forever" (GNU prunes old point releases,
+Bootlin rotates its download area) — the mirror is the durable copy.
+
+**Currently inert:** `base = null` in `mirror.nix`, so fetches are upstream-only (verified: a
+toolchain's store hash is unchanged by the refactor). To turn the mirror on:
+1. `MIRROR_DEST=<target> ./mirror-upload.sh` — builds `.#mirror-tarballs` (all 42 tarballs,
+   named by upstream basename) and uploads them. Supports `s3://…`, `user@host:/path`, local dirs.
+2. Set `base` in `mirror.nix` to the HTTP(S) URL serving that directory.
+
+The mirror must serve plain HTTP(S) GETs by basename (S3/MinIO, nginx, release assets) — Harbor's
+OCI registry can't serve plain tarballs, so use an object store / file host, not the registry API.
 
 ## Toolchain-sourcing decision (from research, 2026-06-28)
 

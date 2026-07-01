@@ -2,8 +2,9 @@
 #
 # Keyed "<matrix-arch>-<era>". Each entry: { tarball = fetchurl; target = <buildroot
 # triple>; crossAlias = <short CROSS_COMPILE prefix>; }.
-# Hashes via `nix store prefetch-file <url>`. Should ultimately be MIRRORED to Harbor —
-# upstream pinned URLs are not "reproducible forever".
+# Hashes via `nix store prefetch-file <url>`. Fetched mirror-first / upstream-fallback via
+# mirror.nix — upstream pinned URLs are not "reproducible forever" (Bootlin rotates its
+# download area). Populate the mirror with `mirror-upload.sh` and set `base` in mirror.nix.
 #
 # An era maps a kernel generation to a gcc FLOOR; per cell we pick the nearest available
 # Bootlin release whose gcc clears that floor. Release->gcc (verified from tarball
@@ -21,6 +22,7 @@
 { pkgs }:
 let
   inherit (pkgs) fetchurl lib;
+  mirror = import ./mirror.nix { inherit lib; };
   base = "https://toolchains.bootlin.com/downloads/releases/toolchains";
 
   # matrix-arch -> Bootlin (arch-dir, buildroot triple, short CROSS_COMPILE alias)
@@ -49,7 +51,9 @@ let
         target = a.target;
         crossAlias = a.alias;
         tarball = fetchurl {
-          url = "${base}/${a.dir}/tarballs/${a.dir}--musl--stable-${release}.tar.${ext release}";
+          # mirror-first, upstream-fallback (see mirror.nix)
+          urls = mirror.mirrored
+            "${base}/${a.dir}/tarballs/${a.dir}--musl--stable-${release}.tar.${ext release}";
           inherit sha256;
         };
       };

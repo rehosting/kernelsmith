@@ -99,6 +99,14 @@
              "k4-mips64eb" "k4-mips64el" "k4-powerpcle"
              "k6-mips64eb" "k6-mips64el" "k6-powerpcle" ]));
 
+        # Every pinned tarball (mcm components + Bootlin SDKs), named by its
+        # upstream basename — the exact layout mirror.nix expects at `base`.
+        # `mirror-upload.sh` builds this and uploads its contents to the mirror.
+        mirror-tarballs = pkgs.linkFarm "mirror-tarballs" (
+          (lib.mapAttrsToList (_: drv: { name = drv.name; path = drv; }) sources)
+          ++ (lib.mapAttrsToList (_: s: { name = s.tarball.name; path = s.tarball; }) bootlinSources)
+        );
+
         default = self.packages.${system}."k6-mipseb";
       };
 
