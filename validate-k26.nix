@@ -4,9 +4,9 @@
 # decision — it exercises the exact upper-bound risks (asm-goto, -Werror, dropped
 # C dialects) that a too-new gcc would trip on an old tree.
 #
-# Stock kernel.org 2.6.31 (RV130's kernel generation) + an in-tree ARM board
-# defconfig. RV130's firmware-specific config adds nothing to the gcc-compat
-# question, so we smoke-test the stock tree for reproducibility.
+# Stock kernel.org 2.6.31 + an in-tree ARM board defconfig. A firmware-specific
+# config adds nothing to the gcc-compat question, so we smoke-test the stock
+# tree for reproducibility.
 #
 #   nix-build validate-k26.nix
 {}:

@@ -66,7 +66,7 @@ toolchain (gcc 5.3.0) that compiles static + dynamic-musl ARM ELF. Findings from
   to build a version it has no `.sha1` for). So the from-source band now has zero placeholder hashes.
 
 **Decision (2026-06-29): VALIDATED — gcc 5.3.0 is viable for k2.6.** `nix-build
-validate-k26.nix` builds a stock **kernel.org 2.6.31** (RV130's generation) ARM `vmlinux`
+validate-k26.nix` builds a stock **kernel.org 2.6.31** ARM `vmlinux`
 end-to-end via `buildKernel`, with the gcc 5.3.0 toolchain auto-resolved from the version.
 Output: `ELF 32-bit LSB executable, ARM, statically linked` (3.8 MB). True gcc-4.x / a
 stable-mcm pin is **not needed** — the gcc-5-on-2.6 breakage is all known, shimmable upper-bound
@@ -91,7 +91,7 @@ builds a stock kernel per modern era to a correct-arch `vmlinux`, exercising bot
 in the sandbox) and adding **rsync** to `nativeBuildInputs` (kernels ≥5.3 shell out to it in
 `headers_install`).
 
-Next: (a) build against RV130's *actual* 2.6.31 config (needs the rehosting `linux` branch +
+Next: (a) build against a *real* firmware kernel config (needs the rehosting `linux` branch +
 `linux_builder`, not checked out in this workspace) to confirm firmware-config coverage;
 (b) link a real guest userland (busybox/libnvram) to prove the musl libs, not just codegen;
 (c) mirror the Bootlin tarballs + the GNU/musl/kernel.org component tarballs to Harbor
@@ -124,7 +124,7 @@ gcc 4.x.** Modern end reaches gcc 15.1 (2025.08). So:
 | k6 / k4 / k3 (gcc ≥5.4) | **vendor Bootlin musl prebuilt** (covers the majority of cells) |
 | **k2.6** (needs gcc 4.x) | **musl-cross-make fallback** — Bootlin has nothing below 5.4 |
 
-2.6 is a real target (RV130 = 2.6.31 ARM), so the fallback band is needed, not hypothetical.
+2.6 is a real target (2.6.31 ARM firmware in the wild), so the fallback band is needed, not hypothetical.
 
 **Per-arch Bootlin coverage (k6 band, found while pinning):** 9 of 12 arches map cleanly to
 a modern Bootlin musl SDK (armel, armhf, arm64, mipseb, mipsel, powerpc, powerpc64,
