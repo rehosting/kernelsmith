@@ -125,6 +125,16 @@ stdenv.mkDerivation {
     # external definition per TU -> "multiple definition" at link. Restore gnu89
     # inline. (-fno-common is stable anchor text in old top-level Makefiles.)
     sed -i 's/-fno-common/-fno-common -fgnu89-inline/' Makefile
+
+    # A gcc newer than this 2.6 tree (we use an era-appropriate 4.9.4, but even
+    # that postdates 2.6.31 by years) raises warnings the tree predates — e.g.
+    # -Wunused-but-set-variable (gcc >= 4.6). Several arch subdir Makefiles hard-
+    # code -Werror, which lands AFTER our KCFLAGS=-Wno-error on the compile line
+    # and therefore wins. Strip standalone -Werror tree-wide (the trailing
+    # [[:space:]]/$ guard keeps -Werror-implicit-function-declaration and
+    # -Werror=<x> intact). We build kernels, we don't lint them.
+    find . \( -name Makefile -o -name Kbuild -o -name '*.mk' \) -print0 \
+      | xargs -0 sed -i -E 's/-Werror([[:space:]]|$)/\1/g'
   '';
 
   makeFlags = [

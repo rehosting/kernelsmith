@@ -10,21 +10,24 @@ rec {
   # Kernel-generation -> compatible tool bundle. The gcc upper-bound per kernel
   # is the hard constraint (e.g. 2.6 will not build under gcc >= 5).
   eras = {
-    # Linux 2.6 / early 3.x — the from-source (musl-cross-make) band.
-    # gcc 5.3.0 is the OLDEST gcc that actually builds with this mcm master:
-    #  - gcc 4.2.1/4.7.4 fail — mcm-master's litecross passes AR_FOR_TARGET=… as
-    #    configure args, which their pre-modern autoconf rejects ("can only
-    #    configure for one host and one target"). True 4.x needs a stable/older
-    #    mcm pin (a follow-up).
-    #  - gcc 5.3.0 has an mcm patch + new-enough autoconf; builds + compiles musl
-    #    ARM (proven). CAVEAT: gcc 5 is above the era-ideal for true 2.6 kernels
-    #    (upper-bound risk: -Werror / dropped dialects) — validate per kernel via
-    #    buildKernel before trusting it on 2.6.x.
-    # (mcm master also ships 2026 musl CVE patches that corrupt 1.1.24 qsort.c;
-    #  mk-cross-toolchain.nix strips them.)
+    # Linux 2.6 / early 3.x — the from-source (musl-cross-make) band, built with
+    # a TRUE era-appropriate gcc 4.9.4 (the last/most-robust 4.x). This matters:
+    # gcc >=5 is too new for stock 2.6 on most arches (mips arch/mips/mm/page.c
+    # aliases a function to a variable — a hard error under gcc>=5; ppc/x86 hit
+    # -Werror + vDSO issues). gcc 4.9.4 predates all of that, so the full-matrix
+    # kernel sweep passes where gcc 5.3.0 only managed ARM.
+    # Building this old gcc under a modern host needs a few gated fixes in
+    # mk-cross-toolchain.nix (all keyed off gccVer<5): refresh the pre-musl
+    # config.sub/.guess, build in-tree gmp/mpfr/mpc static, and compile gcc's own
+    # C++03-era source with -std=gnu++03 (host gcc 13 defaults to C++17). Support
+    # libs are pinned to the gcc-4.9 era (mpfr 3.1.4 / mpc 1.0.3 / gmp 6.1.0);
+    # mpfr>=4 would not build against gcc 4.9. gcc 4.9.4 is not in mcm's blessed
+    # hashes/ set — mk-cross-toolchain synthesizes the entry from the staged
+    # tarball. (mcm master also ships 2026 musl CVE patches that corrupt 1.1.24
+    # qsort.c; mk-cross-toolchain.nix strips them.)
     "k2.6" = {
-      gccVer = "5.3.0"; binutilsVer = "2.27"; muslVer = "1.1.24";
-      gmpVer = "6.1.2"; mpcVer = "1.1.0"; mpfrVer = "4.0.2"; linuxVer = "4.19.90";
+      gccVer = "4.9.4"; binutilsVer = "2.27"; muslVer = "1.1.24";
+      gmpVer = "6.1.0"; mpcVer = "1.0.3"; mpfrVer = "3.1.4"; linuxVer = "4.19.90";
     };
     # NOTE: the from-source (musl-cross-make) cells below only get built for the
     # arches Bootlin can't supply (mips64eb/el, powerpcle at every modern band;

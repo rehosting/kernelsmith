@@ -40,6 +40,11 @@
           inherit (arch) target;
           inherit (era) gccVer binutilsVer muslVer gmpVer mpcVer mpfrVer linuxVer;
           extraConfig = arch.extraConfig or [ ];
+          # The gcc-4.x era targets kernels/modules (C). Its libstdc++ predates
+          # musl and won't build against it (glibc-only _ISpunct/_ISalpha ctype
+          # macros) without musl-compat patches mcm ships only for its blessed
+          # versions. C is all buildKernel needs, so drop c++ for this band.
+          languages = if lib.versionOlder era.gccVer "5" then "c" else "c,c++";
         });
 
       # Cartesian product era x arch (musl-cross-make), minus unsupported pairs.

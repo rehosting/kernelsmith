@@ -101,17 +101,52 @@ the ABI. **Result: 32/42.**
 | k6 (6.6) | **11/11** | — |
 | k4 (5.10) | 10/11 | x86_64: `objtool` under `tools/` has its own `-Werror` (gcc-13 use-after-free), unreachable by `HOSTCFLAGS` |
 | k3 (3.18) | 9/11 | powerpc64: ELFv1/ELFv2 ABI (musl is elfv2, BE kernel is `-mcall-aixdesc`/elfv1); powerpc64le: vdso32 sub-build invokes host gcc |
-| k2.6 (2.6.31) | 2/9 | ARM-only. mips×4: `page.c` function→variable alias is a **hard** gcc≥5 error; powerpc/x86_64: subdir `-Werror` precedence + x86 vDSO |
+| k2.6 (2.6.31) | 2/9 → **3/9** | see the TRUE gcc-4.x section below — moving k2.6 to gcc 4.9.4 removed the hard errors and recovered powerpc |
 
 Two `kernel.nix` `eraQuirks` fixes landed (recovered the 3 k3 `dtc` cells, no regressions):
 `KCFLAGS=-Wno-error` (cross warnings) and `HOSTCFLAGS` `-fcommon`/`-Wno-error` (host `dtc`/`objtool`).
 
-**The sweep's headline finding:** the residual 10 are **four characterized root causes**, not noise,
-and they cluster by era. Modern kernels (k4/k6) are essentially clean. The real frontier is **k2.6:
-gcc 5.3 is era-inappropriate for 2.6** — it works for ARM but hits genuine source/ABI incompatibilities
-(mips alias hard-error, x86 vDSO, ppc `-Werror`) that a *true gcc-4.x* would not, since 4.x was
-co-designed with these trees. This empirically validates that the **deferred true-gcc-4.x toolchain
-(mcm stable pin)** — not per-arch kernel shims — is the correct investment for the k2.6 band.
+**The sweep's headline finding:** the residual failures are **characterized root causes**, not noise,
+and they cluster by era. Modern kernels (k4/k6) are essentially clean. The frontier is **k2.6**, which
+the next section tackles.
+
+## TRUE gcc-4.x for the k2.6 band (2026-07-02)
+
+The k2.6 sweep above ran under gcc 5.3.0 and hit *hard* errors that no flag can fix (mips
+`arch/mips/mm/page.c` aliases a function to a variable — rejected outright by gcc ≥5; x86 vDSO
+`-m elf_x86_64`). Those are gcc-being-too-new symptoms, so we built a genuinely era-appropriate
+**gcc 4.9.4** cross toolchain from source (musl-cross-make). The feared "modern host can't compile
+2010s gcc" wall did **not** materialize; it was five small, individually-gated (`gccVer < 5`) fixes
+in `mk-cross-toolchain.nix`:
+
+1. refresh the pre-musl `config.sub`/`config.guess` from nixpkgs `gnu-config` (old ones reject
+   `*-linux-musl*` triples);
+2. use gcc **4.9.4** (4.7.4's in-tree `mpc` can't detect a modern `mpfr`);
+3. synthesize the mcm `hashes/` entry from the staged tarball (4.9.4 isn't in mcm's blessed set);
+4. `touch` staged tarballs newer than those hashes, else make fires an offline `wget`;
+5. build gcc's own C++03-era source with `-std=gnu++03` (host gcc 13 defaults to C++17), and build
+   the k2.6 band `languages = "c"` (its libstdc++ predates musl's `_IS*` ctype macros).
+
+**Result: k2.6 → 3/9** (armel, armhf, **powerpc**), verified: gcc 4.9.4 produces correct ARM ELF
+(static + dynamic musl). A `kernel.nix` k2.6 quirk (strip standalone `-Werror` from the old tree's
+Makefiles — it lands after `KCFLAGS` and wins on precedence) recovered powerpc.
+
+**Honest status — the k2.6 non-ARM tail is layered, not single-cause.** gcc 4.9.4 removed the hard
+errors, but each remaining arch peels back to the *next* modern-tooling-vs-2009-kernel issue:
+- **mips ×4**: the *toolchain* itself fails — gcc 4.9's MIPS `libgcc` unwinder needs `asm/unistd.h`
+  in the build sysroot (which mcm populates too late). Blocks before the kernel. (This also means
+  `.#k26-all` no longer builds all 12 toolchains — the 6 mips/mips64 cells regressed until this is
+  fixed; the 6 non-mips k2.6 toolchains build.)
+- **powerpc64**: past `-Werror`, now `arch/powerpc/Makefile:171` (`bootwrapper_install %.dtb:`) trips
+  modern GNU make ≥4.3's "mixed implicit and normal rules" (plus the ELFv1/v2 ABI underneath).
+- **x86_64**: past the vDSO issue, now a `percpu_to_op` inline-asm macro error under gcc 4.9.
+
+So gcc 4.9.4 is **necessary but not sufficient** for full k2.6 coverage. ARM (the primary firmware
+target) is solid; completing mips/ppc64/x86 is a per-arch effort, prioritize by firmware need.
+Concrete next fixes: (a) install kernel headers into the build sysroot before `libgcc` (unblocks all
+4 mips — likely the highest leverage); (b) patch the modern-make mixed-rules line for ppc; (c) the
+x86 percpu macro. Fallback if from-source stays painful for an arch: **kernel.org crosstool** ships
+prebuilt gcc 4.9 (kernel-build-only, glibc).
 
 Next: (a) **true gcc-4.x for k2.6** (the mcm stable-pin work) — the highest-leverage fix, would likely
 clear most of the k2.6 column at once; (b) a **`-Wno-error` compiler wrapper** (appends the flag *last*,

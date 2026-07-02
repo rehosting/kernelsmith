@@ -28,6 +28,14 @@
 let
   inherit (pkgs) lib stdenv;
 
+  # gcc/binutils from the gcc-4.x era ship a config.sub/config.guess that predate
+  # musl and reject our `*-linux-musl*` target triples ("config.sub <triple>
+  # failed"). mcm normally refreshes them from savannah at build time, but that
+  # is a network step the offline sandbox skips — so we refresh them ourselves
+  # (from nixpkgs' gnu-config) for the old era only, leaving gcc>=5 cells (whose
+  # bundled config.sub already knows musl) byte-for-byte unchanged.
+  needsConfigSubUpdate = lib.versionOlder gccVer "5";
+
   # The exact set of component tarballs this toolchain needs, keyed by the
   # filename mcm greps for in sources/.
   needed = lib.filterAttrs (n: _: builtins.elem n ([
@@ -51,6 +59,18 @@ let
     ${lib.optionalString (linuxVer != null) "LINUX_VER = ${linuxVer}"}
     COMMON_CONFIG += --disable-nls --disable-multilib
     GCC_CONFIG += --enable-languages=${languages} --disable-libquadmath --disable-decimal-float
+    ${lib.optionalString needsConfigSubUpdate ''
+      # gcc-4.x era, two host-side fixes (COMMON_CONFIG reaches binutils+gcc, and
+      # gcc forwards it to the in-tree math libs; musl configures separately so
+      # the TARGET libc still gets its shared .so):
+      #  - --disable-shared: build in-tree gmp/mpfr/mpc static, else mpc's
+      #    configure fails to link a shared mpfr ("libmpfr ... different ABI").
+      #  - CXX=-std=gnu++03: gcc 4.9's own C++ source uses constructs removed in
+      #    C++17 (e.g. bool operator++ in reload1.c); host gcc 13 defaults to
+      #    C++17, so build gcc with the old dialect it was written for.
+      COMMON_CONFIG += --disable-shared --enable-static
+      COMMON_CONFIG += CXX="g++ -std=gnu++03"
+    ''}
     ${lib.concatStringsSep "\n" extraConfig}
   '';
 
@@ -64,7 +84,7 @@ stdenv.mkDerivation {
 
   # Host tools needed to drive the mcm build (the compilers it produces are
   # bootstrapped from the host gcc in nativeBuildInputs).
-  nativeBuildInputs = with pkgs; [ gnumake gcc bison flex texinfo gnused gawk which perl ];
+  nativeBuildInputs = with pkgs; [ gnumake gcc bison flex texinfo gnused gawk which perl file ];
 
   # Old gcc + modern host glibc headers fight; relax where mcm/gcc are noisy.
   NIX_CFLAGS_COMPILE = "-Wno-error";
@@ -90,6 +110,19 @@ stdenv.mkDerivation {
       }'')
       needed)}
 
+    # mcm's dependency graph requires a hashes/<file>.sha1 for every source it
+    # extracts (it's a prereq of the download rule). We pre-stage sources so the
+    # download+verify never runs, but the file must still EXIST or make errors on
+    # the missing prereq. Synthesize any absent entries from the staged tarballs
+    # so we can use component versions mcm doesn't bless (e.g. gcc 4.9.4).
+    for f in sources/*.tar.*; do
+      b=$(basename "$f")
+      [ -e "hashes/$b.sha1" ] || printf '%s  %s\n' "$(sha1sum < "$f" | cut -d' ' -f1)" "$b" > "hashes/$b.sha1"
+    done
+    # Make the staged tarballs newer than their hashes/*.sha1 prereqs, else make
+    # deems them out of date and fires mcm's (offline-forbidden) wget download.
+    touch sources/*.tar.*
+
     cat > config.mak <<'EOF'
     ${configMak}
     EOF
@@ -98,6 +131,17 @@ stdenv.mkDerivation {
   # mcm's "install" places the toolchain under $(OUTPUT); we set OUTPUT=$out.
   buildPhase = ''
     runHook preBuild
+    ${lib.optionalString needsConfigSubUpdate ''
+      # Extract sources first (no build), refresh the pre-musl config.sub/
+      # config.guess in the gcc + binutils trees, then build. extract_all only
+      # populates $(SRC_DIRS); the subsequent `make` reuses them (order-only
+      # prereqs), so it will not re-extract and clobber our refreshed copies.
+      make extract_all
+      for f in config.sub config.guess; do
+        find gcc-${gccVer} binutils-${binutilsVer} -name "$f" \
+          -exec cp -f ${pkgs.gnu-config}/$f {} \;
+      done
+    ''}
     make -j$NIX_BUILD_CORES
     runHook postBuild
   '';

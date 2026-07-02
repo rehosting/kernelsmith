@@ -28,6 +28,13 @@ in
     "sha256-Npc3zlFYf5JGYEGperfSNYxtnhtkkLOUDrCfsKmmrIg=";
   "gcc-4.2.1" = fetch (gnu "gcc/gcc-4.2.1/gcc-4.2.1.tar.bz2")
     "sha256-ygoSaVs7zPqGKFCeCMue19jtSN7/CimeTLjeh9LB/O0=";
+  "gcc-4.7.4" = fetch (gnu "gcc/gcc-4.7.4/gcc-4.7.4.tar.bz2")
+    "sha256-kuYcbcOgpEnmLXKjgYX9pVAWioZwLeoHEl69PsOZYoI=";
+  # gcc 4.9.4 = the k2.6 band's true era-appropriate compiler. Last/most-robust
+  # 4.x; unlike 4.7.4 its in-tree build detects modern mpfr/mpc correctly. Not in
+  # mcm's blessed hashes/ set — mk-cross-toolchain synthesizes the hash entry.
+  "gcc-4.9.4" = fetch (gnu "gcc/gcc-4.9.4/gcc-4.9.4.tar.bz2")
+    "sha256-bBHSks0BspT5+EyaWcIw2A6eSkflxjVfBGuzbU81gJI=";
   "gcc-5.3.0" = fetch (gnu "gcc/gcc-5.3.0/gcc-5.3.0.tar.bz2")
     "sha256-uE9Vkukhi3PbrmErUlMDWns0qaH3aI0uG/qvcmfVxNs=";
   "musl-1.1.24" = fetch "https://musl.libc.org/releases/musl-1.1.24.tar.gz"
@@ -38,6 +45,16 @@ in
     "sha256-aYXFOBQ8EgjcsaxCztrW/1LiZ7R+X5cBg6PnUSW0PC4=";
   "mpfr-4.0.2" = fetch (gnu "mpfr/mpfr-4.0.2.tar.bz2")
     "sha256-wF4/AtCeDpAZOEzdWODxnGTm2x/W9ez3e0scYcolOsw=";
+
+  # Era-appropriate support libs for the true gcc-4.x k2.6 toolchain: gcc 4.7.4
+  # (2012) predates mpfr 4.x's API removals and won't build against mpfr>=4.0,
+  # so it needs mpfr 3.1.x + mpc 1.0.3 + gmp 6.1.0 (all mcm-blessed).
+  "gmp-6.1.0" = fetch (gnu "gmp/gmp-6.1.0.tar.bz2")
+    "sha256-SYRJqZTv66UniFwQQFmTQnmV0/hrh2jYzfjZ3Xxrc+g=";
+  "mpc-1.0.3" = fetch (gnu "mpc/mpc-1.0.3.tar.gz")
+    "sha256-YX3sxuoJiJ+wjt4zCRegCxaAm424jCnDG/u0nL+I7MM=";
+  "mpfr-3.1.4" = fetch (gnu "mpfr/mpfr-3.1.4.tar.bz2")
+    "sha256-0xA6gM2tJAftWB82GMS+0E4MktHPdxpl6tZizDl/d3U=";
   "linux-4.19.90" = fetch "https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.19.90.tar.xz"
     "sha256-KdhsCm2vFp7AtLQqEvjVXciUxSvZAfh29SoFkGpc9/0=";
 
