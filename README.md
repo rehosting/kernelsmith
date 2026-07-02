@@ -91,11 +91,35 @@ builds a stock kernel per modern era to a correct-arch `vmlinux`, exercising bot
 in the sandbox) and adding **rsync** to `nativeBuildInputs` (kernels ≥5.3 shell out to it in
 `headers_install`).
 
-Next: (a) build against a *real* firmware kernel config (needs the rehosting `linux` branch +
-`linux_builder`, not checked out in this workspace) to confirm firmware-config coverage;
-(b) link a real guest userland (busybox/libnvram) to prove the musl libs, not just codegen;
-(c) ~~mirror the pinned tarballs~~ ✅ **wired** — see "Tarball mirror" below; remaining is to
-populate a mirror host and set `base`; (d) wire a real consumer (linux_builder/igloo_driver).
+**FULL BAND×ARCH KERNEL SWEEP (2026-07-02):** `nix build -f validate-sweep.nix all` builds one
+stock kernel per band across every kernel-capable arch (42 cells) to a `vmlinux`, using
+endianness/width-definite defconfigs (SGI Indy/Origin, Loongson, PowerMac) so a pass certifies
+the ABI. **Result: 32/42.**
+
+| Band | Pass | Fails (root cause, not flag-noise) |
+|---|---|---|
+| k6 (6.6) | **11/11** | — |
+| k4 (5.10) | 10/11 | x86_64: `objtool` under `tools/` has its own `-Werror` (gcc-13 use-after-free), unreachable by `HOSTCFLAGS` |
+| k3 (3.18) | 9/11 | powerpc64: ELFv1/ELFv2 ABI (musl is elfv2, BE kernel is `-mcall-aixdesc`/elfv1); powerpc64le: vdso32 sub-build invokes host gcc |
+| k2.6 (2.6.31) | 2/9 | ARM-only. mips×4: `page.c` function→variable alias is a **hard** gcc≥5 error; powerpc/x86_64: subdir `-Werror` precedence + x86 vDSO |
+
+Two `kernel.nix` `eraQuirks` fixes landed (recovered the 3 k3 `dtc` cells, no regressions):
+`KCFLAGS=-Wno-error` (cross warnings) and `HOSTCFLAGS` `-fcommon`/`-Wno-error` (host `dtc`/`objtool`).
+
+**The sweep's headline finding:** the residual 10 are **four characterized root causes**, not noise,
+and they cluster by era. Modern kernels (k4/k6) are essentially clean. The real frontier is **k2.6:
+gcc 5.3 is era-inappropriate for 2.6** — it works for ARM but hits genuine source/ABI incompatibilities
+(mips alias hard-error, x86 vDSO, ppc `-Werror`) that a *true gcc-4.x* would not, since 4.x was
+co-designed with these trees. This empirically validates that the **deferred true-gcc-4.x toolchain
+(mcm stable pin)** — not per-arch kernel shims — is the correct investment for the k2.6 band.
+
+Next: (a) **true gcc-4.x for k2.6** (the mcm stable-pin work) — the highest-leverage fix, would likely
+clear most of the k2.6 column at once; (b) a **`-Wno-error` compiler wrapper** (appends the flag *last*,
+defeating `-Werror` wherever it is injected — kernel, subdir, or `tools/` — a cleaner general lever than
+the three separate make-var knobs); (c) ppc64-BE `-mabi=elfv1` forcing + vDSO cross-propagation fix;
+(d) build against a *real* firmware kernel config (needs the rehosting `linux` branch + `linux_builder`);
+(e) a `buildModule` entrypoint to compile out-of-tree modules (e.g. igloo_driver) against a *prebuilt*
+`kernel-devel` — i.e. build modules for kernels whose source you don't have; (f) mirror host + `base`.
 
 ## Tarball mirror (reproducibility)
 
