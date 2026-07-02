@@ -39,22 +39,48 @@ let
     x86_64 = "x86_64";
   }.${arch} or (throw "buildKernel: no kernel ARCH mapping for ${arch}");
 
-  # Per-era build quirks (old trees fight modern host tools). Stub — grow this.
+  # Per-era build quirks (old trees fight modern host + cross tools). The theme:
+  # a NEWER gcc than a tree was written for invents diagnostics the tree trips on
+  # under its own -Werror. We build kernels, we don't lint them, so we demote the
+  # anachronistic errors rather than patch each site. Two axes:
+  #   KCFLAGS   -> appended to the CROSS (target) compile — for gcc>=5 warnings in
+  #                kernel C (unused-but-set-variable, aliased-declaration, ...).
+  #   HOSTCFLAGS-> the HOST-tool compile (dtc/objtool/... built with nixpkgs gcc13):
+  #                -fcommon undoes gcc>=10's -fno-common default that breaks old
+  #                host tools' tentative definitions (dtc's `yylloc`); -Wno-error
+  #                clears gcc>=12 host warnings (objtool use-after-free, OpenSSL-3
+  #                deprecations). NOTE the semantics flip across eras: pre-4.19
+  #                `HOSTCFLAGS` OVERRIDES the tree's host flags (so k3 must restate
+  #                the 3.18 defaults), >=4.19 it APPENDS to KBUILD_HOSTCFLAGS.
+  # `hostCFlags` is kept OUT of `extraMake` because it can contain spaces (the
+  # 3.18 default set restated below), and the build make calls expand $makeFlags
+  # unquoted; a spaced value would word-split (e.g. `-O2` misread as make's own
+  # `-O`utput-sync). It is threaded in as a single quoted `HOSTCFLAGS=...` token.
   eraQuirks = {
-    "k2.6" = { patches = [ ]; extraMake = "KBUILD_NOPEDANTIC=1"; };
-    "k3" = { patches = [ ]; extraMake = ""; };
-    "k4" = { patches = [ ]; extraMake = ""; };
-    "k6" = { patches = [ ]; extraMake = ""; };
+    "k2.6" = { patches = [ ]; extraMake = [ "KBUILD_NOPEDANTIC=1" "KCFLAGS=-Wno-error" ]; hostCFlags = ""; };
+    "k3" = { patches = [ ]; extraMake = [ "KCFLAGS=-Wno-error" ];
+      # 3.18's `HOSTCFLAGS` OVERRIDES (pre-4.19 semantics), so restate its
+      # defaults, then add -fcommon (gcc>=10 -fno-common breaks dtc's `yylloc`)
+      # and -Wno-error.
+      hostCFlags = "-Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer -std=gnu89 -fcommon -Wno-error"; };
+    # >=4.19 `HOSTCFLAGS` APPENDS to KBUILD_HOSTCFLAGS, so a lone -Wno-error is
+    # enough to clear gcc>=12 host warnings (objtool use-after-free, ...).
+    "k4" = { patches = [ ]; extraMake = [ ]; hostCFlags = "-Wno-error"; };
+    "k6" = { patches = [ ]; extraMake = [ ]; hostCFlags = "-Wno-error"; };
   }.${eraName};
+
+  # Single quoted make token for the (possibly spaced) host flags, or empty.
+  hostFlagArg = lib.optionalString (eraQuirks.hostCFlags != "")
+    ''"HOSTCFLAGS=${eraQuirks.hostCFlags}"'';
 
   # Config materialization. A board defconfig target generates .config wholesale
   # (works on every era). A supplied .config needs normalizing against the tree:
   # `olddefconfig` only exists from ~2.6.36, so fall back to piped `oldconfig`
   # on the k2.6 band.
   configCmd =
-    if defconfig != null then "make $makeFlags ${defconfig}"
-    else if eraName == "k2.6" then ''yes "" | make $makeFlags oldconfig''
-    else "make $makeFlags olddefconfig";
+    if defconfig != null then "make $makeFlags ${hostFlagArg} ${defconfig}"
+    else if eraName == "k2.6" then ''yes "" | make $makeFlags ${hostFlagArg} oldconfig''
+    else "make $makeFlags ${hostFlagArg} olddefconfig";
 
   # gcc major of the resolved toolchain, for the k2.6 header-dispatch shim.
   gccMajor = lib.versions.major toolchain.gccVer;
@@ -105,14 +131,14 @@ stdenv.mkDerivation {
     "ARCH=${kernelArch}"
     "CROSS_COMPILE=${crossPrefix}"
     "HOSTCC=${pkgs.stdenv.cc}/bin/cc"
-  ] ++ lib.optional (eraQuirks.extraMake != "") eraQuirks.extraMake
+  ] ++ eraQuirks.extraMake
     ++ lib.mapAttrsToList (k: v: "${k}=${v}") archMakeVars;
 
   buildPhase = ''
     runHook preBuild
     ${configCmd}
-    make $makeFlags -j$NIX_BUILD_CORES
-    ${lib.optionalString buildModules "make $makeFlags -j$NIX_BUILD_CORES modules"}
+    make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES
+    ${lib.optionalString buildModules "make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES modules"}
     runHook postBuild
   '';
 
