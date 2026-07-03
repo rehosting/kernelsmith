@@ -36,6 +36,20 @@ let
   # bundled config.sub already knows musl) byte-for-byte unchanged.
   needsConfigSubUpdate = lib.versionOlder gccVer "5";
 
+  # Appended to litecross/Makefile for the gcc-4.x era: make libgcc depend on the
+  # kernel headers being staged into the BUILD sysroot first. gcc 4.x's MIPS
+  # libgcc (md-unwind-support.h) `#include <asm/unistd.h>`, but mcm otherwise
+  # installs kernel headers too late (only into the OUTPUT sysroot, after libgcc)
+  # -> "asm/unistd.h: No such file". The added prereq only adds a dependency (no
+  # recipe) to the existing libgcc rule. Built as a double-quoted string so `\t`
+  # yields the literal tabs Makefile recipes require; `$(...)`/`$@` stay literal.
+  # Harmless when LINUX_VER is unset: the `-$(MAKE)` ignores the missing target.
+  kernHdrRule = pkgs.writeText "kernelsmith-kernhdr.mk"
+    ("\nobj_gcc/$(TARGET)/libgcc/libgcc.a: obj_sysroot/.lc_kernhdrs\n"
+     + "obj_sysroot/.lc_kernhdrs: | obj_sysroot/.lc_headers\n"
+     + "\t-$(MAKE) obj_kernel_headers/.lc_built && cp -R obj_kernel_headers/staged/include/. obj_sysroot/include/\n"
+     + "\ttouch $@\n");
+
   # The exact set of component tarballs this toolchain needs, keyed by the
   # filename mcm greps for in sources/.
   needed = lib.filterAttrs (n: _: builtins.elem n ([
@@ -122,6 +136,9 @@ stdenv.mkDerivation {
     # Make the staged tarballs newer than their hashes/*.sha1 prereqs, else make
     # deems them out of date and fires mcm's (offline-forbidden) wget download.
     touch sources/*.tar.*
+
+    ${lib.optionalString needsConfigSubUpdate
+      "cat ${kernHdrRule} >> litecross/Makefile"}
 
     cat > config.mak <<'EOF'
     ${configMak}
