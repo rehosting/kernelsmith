@@ -153,8 +153,37 @@ k2.6 *toolchain* row green, and gets ARM + powerpc *kernels* building, but the m
 solid. Prioritize the rest by firmware need. Fallback if a given arch's from-source path stays
 painful: **kernel.org crosstool** ships prebuilt gcc 4.9 (kernel-build-only, glibc).
 
-Next: (a) **true gcc-4.x for k2.6** (the mcm stable-pin work) — the highest-leverage fix, would likely
-clear most of the k2.6 column at once; (b) a **`-Wno-error` compiler wrapper** (appends the flag *last*,
+### Testing a *truly* period-correct gcc 4.4.7 — and why 4.9.4 is actually the floor (2026-07-03)
+
+The open question was whether an even more era-matched **gcc 4.4.7** (what 2.6.31 was literally built
+with) would clear the residual kernel-source failures (`page.c` alias, etc.) with *fewer* shims than
+4.9.4. Tested directly (mipsel, from source, binutils held at 2.27 to isolate the gcc variable). Two
+things came out of it, one expected and one decisive:
+
+- **The compiler proper builds fine** — the "ancient gcc won't build under a 2026 host" fear is again
+  false. It needed only one new shim beyond 4.9.4's: build gcc's own C with `CC="gcc -std=gnu89
+  -fgnu89-inline"` (gcc <4.8 is written in gnu89 C; host gcc's gnu11 inline made `floor_log2`/
+  `exact_log2` in `toplev.c` redefinitions). `all-gcc` completed clean.
+- **But it can't consume our pinned musl 1.1.24.** First its MIPS `libgcc` unwinder failed
+  (`config/mips/linux-unwind.h`: `struct siginfo` — a named tag glibc has but musl doesn't; fixable
+  with the same one-line `struct siginfo`→`siginfo_t` patch mcm ships for *blessed* versions). Clearing
+  that only exposed the real wall: **musl 1.1.24's own headers don't parse under gcc 4.4.7** —
+  `bits/alltypes.h` fails with `duplicate 'unsigned'` / `two or more data types`. Same sysroot gcc
+  4.9.4 parsed cleanly; only the compiler version changed.
+
+**Conclusion (a correction to the prior "true gcc-4.x is the highest-leverage fix" hypothesis):** it is
+*not*. musl-cross-make blesses a specific set of gcc versions precisely because each needs a maintained
+(gcc × musl) compatibility patch set. **gcc 4.9.4 is the *oldest* gcc that cleanly consumes modern musl
+1.1.24** — going below it doesn't reduce shims, it *leaves the supported envelope* and trades a few
+kernel-source patches for an open-ended musl-header porting burden. So 4.9.4 isn't a compromise short of
+"period-correct"; for a musl toolchain it **is** the practical period floor. The right lever for the
+residual k2.6 kernels is therefore per-arch **kernel-source** patches (or crosstool's glibc gcc-4.9),
+**not** an older compiler. (The two gcc-4.4 fixes found — gnu89-host and the siginfo one-liner — are
+recorded here so a future glibc-target re-attempt is cheap; they were reverted from the tree since the
+musl path is a dead end.)
+
+Next: (a) ~~true gcc-4.x for k2.6~~ **[tested & rejected above — 4.9.4 is the musl floor]**;
+(b) a **`-Wno-error` compiler wrapper** (appends the flag *last*,
 defeating `-Werror` wherever it is injected — kernel, subdir, or `tools/` — a cleaner general lever than
 the three separate make-var knobs); (c) ppc64-BE `-mabi=elfv1` forcing + vDSO cross-propagation fix;
 (d) build against a *real* firmware kernel config (needs the rehosting `linux` branch + `linux_builder`);
