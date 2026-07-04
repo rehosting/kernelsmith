@@ -23,6 +23,11 @@
   # big-endian malta kernel is malta_defconfig + configEnable ["CPU_BIG_ENDIAN"].
   configEnable ? [ ],
   configDisable ? [ ],
+  # Device-tree blobs to build + install (by make-target basename, e.g.
+  # "versatile-pb.dtb"). Installed to $out/dtbs/<name>. Modern DT-only ARM boards
+  # (versatile, vexpress, …) need one passed to qemu via -dtb; qemu's `virt`
+  # machine synthesizes its own, so it needs none.
+  dtbs ? [ ],
 }:
 assert (config != null) != (defconfig != null) ||
   throw "buildKernel: pass exactly one of `config` or `defconfig`";
@@ -210,6 +215,8 @@ stdenv.mkDerivation {
     make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES
     ${lib.optionalString (bootImage != null)
       "make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES ${bootImage.target}"}
+    ${lib.optionalString (dtbs != [ ])
+      "make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES ${lib.concatStringsSep " " dtbs}"}
     ${lib.optionalString buildModules "make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES modules"}
     runHook postBuild
   '';
@@ -222,6 +229,13 @@ stdenv.mkDerivation {
     # the arch's bootable image (zImage/bzImage/Image.gz), where it differs from vmlinux
     ${lib.optionalString (bootImage != null) ''
       cp ${bootImage.file} $out/ || { echo "boot image ${bootImage.file} missing" >&2; exit 1; }
+    ''}
+    ${lib.optionalString (dtbs != [ ]) ''
+      mkdir -p $out/dtbs
+      for d in ${lib.concatStringsSep " " dtbs}; do
+        find arch/${kernelArch}/boot/dts -name "$d" -exec cp {} $out/dtbs/ \; \
+          || { echo "dtb $d not found" >&2; exit 1; }
+      done
     ''}
     ${lib.optionalString buildModules ''
       make $makeFlags INSTALL_MOD_PATH=$out modules_install

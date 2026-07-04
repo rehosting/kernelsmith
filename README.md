@@ -253,11 +253,23 @@ cross-build system, and the fix was to stop fighting it as a cross and build a g
   (patch `NATIVE_SYSTEM_HEADER_DIR`), `struct ucontext` (glibc ≥2.26), and the in-build `xgcc`'s header
   search for target-libgcc's CPP check (`CPATH`). → 17.6 MB `vmlinux` via the real entrypoint.
 
-**Boot-validated, and now automated — `nix build -f boot.nix all`.** The period-gcc kernels don't just
-compile, they boot, and that's a *build target*: `boot.nix` builds each system on a qemu-friendly
-defconfig + fragments, then runs qemu headless in a sandboxed derivation and asserts the boot reached the
-root-fs stage (no rootfs supplied → `VFS: Unable to mount root fs` panic is the success marker). A cell's
-derivation only succeeds if its kernel boots. **8 of the 9 kernel-capable k2.6 arches boot** (banner
+**Boot-validated across eras, and automated — `nix build -f boot.nix all`.** The kernels don't just
+compile, they boot, and that's a *build target*: `boot.nix` builds each (band, arch) system on a
+qemu-friendly defconfig + fragments, then runs qemu headless in a sandboxed derivation and asserts the boot
+reached the root-fs stage (no rootfs supplied → a `VFS: Unable to mount root fs` panic is the success
+marker). A cell's derivation only succeeds if its kernel boots. Per band: `nix build -f boot.nix k4`;
+one cell: `tests.k4-powerpc64`; interactive: `nix run -f boot.nix runners.k4-arm64`.
+
+**k4 (5.10.229, gcc 9.x): all 11 arches boot** — armel/armhf/arm64, mipsel/mipseb/mips64el/mips64eb,
+powerpc/powerpc64/powerpc64le, x86_64. The modern band clears every k2.6 gap: `powerpc64` and
+`powerpc64le` boot on `-M pseries`, armhf and arm64 on the DT-driven `-M virt`. Fixes it surfaced:
+5.10 must be a late `.y` (binutils 2.36 omits the symtab from empty objects like x86_64's `thunk_64.o`,
+which 5.10.0's objtool rejects); `multi_v7` armhf needs `GCC_PLUGINS` off (plugin ABI ≠ the cross gcc);
+ppc64le needs `COMPAT` off (its pure-64-bit LE toolchain can't build the 32-bit vdso); 64-bit malta needs
+`-cpu MIPS64R2-generic` (the default malta CPU is 32-bit → silent); and modern DT-only versatile needs a
+`-dtb` (buildKernel gained a `dtbs` param, installed to `$out/dtbs/`).
+
+**k2.6 (2.6.31, period gcc 4.4.7): 8 of the 9 kernel-capable arches boot** (banner
 `Linux version 2.6.31 (gcc version 4.4.7)`):
 
 | cell | qemu | defconfig (+ fragments) | image |
@@ -294,9 +306,12 @@ The sweep drove the **boot-image outputs** emitted by `kernel.nix`: ARM's ELF `v
 *virtual* address that qemu/bootloaders can't jump to before the MMU is on (MIPS boots vmlinux directly
 via KSEG0), so each arch also ships the image it actually boots (`zImage`/`bzImage`/`Image.gz`).
 
-Next: (a) build against a *real* firmware kernel config (needs the rehosting `linux` branch +
-`linux_builder`); (b) a `buildModule` entrypoint to compile out-of-tree modules (e.g. igloo_driver)
-against a *prebuilt* `kernel-devel`; (c) mirror host + `base`.
+Next: (a) extend the boot sweep to the modern bands (k3/k4/k6) — more arches boot there (arm64 `-M virt`,
+`powerpc64`/`powerpc64le` on `-M pseries`, armhf on vexpress/virt), so those bands should clear the k2.6
+gaps; (b) get `powerpc64` booting at 2.6.x — try a slightly later 2.6.3x kernel just for that cell (the
+OpenBIOS OF-claim path improved shortly after 2.6.31); (c) build against a *real* firmware kernel config
+(needs the rehosting `linux` branch + `linux_builder`); (d) a `buildModule` entrypoint to compile
+out-of-tree modules (e.g. igloo_driver) against a *prebuilt* `kernel-devel`; (e) mirror host + `base`.
 
 ## Tarball mirror (reproducibility)
 
