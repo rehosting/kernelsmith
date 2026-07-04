@@ -257,26 +257,38 @@ cross-build system, and the fix was to stop fighting it as a cross and build a g
 compile, they boot, and that's a *build target*: `boot.nix` builds each system on a qemu-friendly
 defconfig + fragments, then runs qemu headless in a sandboxed derivation and asserts the boot reached the
 root-fs stage (no rootfs supplied → `VFS: Unable to mount root fs` panic is the success marker). A cell's
-derivation only succeeds if its kernel boots. Six k2.6 cells are green (banner
+derivation only succeeds if its kernel boots. **8 of the 9 kernel-capable k2.6 arches boot** (banner
 `Linux version 2.6.31 (gcc version 4.4.7)`):
 
 | cell | qemu | defconfig (+ fragments) | image |
 |------|------|-------------------------|-------|
-| `mipsel`   | `-M malta`      | `malta_defconfig`                                   | vmlinux |
-| `mipseb`   | `-M malta` (BE) | `malta_defconfig` +`CPU_BIG_ENDIAN` −`CPU_LITTLE_ENDIAN` | vmlinux |
-| `mips64el` | `-M fuloong2e`  | `fulong_defconfig`                                  | vmlinux |
-| `armel`    | `-M versatilepb`| `versatile_defconfig`                               | zImage  |
-| `powerpc`  | `-M g3beige`    | `pmac32_defconfig` +`SERIAL_PMACZILOG[_CONSOLE]`    | vmlinux |
-| `x86_64`   | `-M pc`         | `x86_64_defconfig`                                  | bzImage |
+| `mipsel`   | `-M malta`          | `malta_defconfig`                                        | vmlinux |
+| `mipseb`   | `-M malta` (BE)     | `malta_defconfig` +`CPU_BIG_ENDIAN` −`CPU_LITTLE_ENDIAN`  | vmlinux |
+| `mips64el` | `-M fuloong2e`      | `fulong_defconfig`                                       | vmlinux |
+| `mips64eb` | `-M malta` (mips64) | `malta_defconfig` →64-bit BE (+`64BIT`+`CPU_MIPS64_R1`+`CPU_BIG_ENDIAN`) | vmlinux |
+| `armel`    | `-M versatilepb`    | `versatile_defconfig`                                    | zImage  |
+| `armhf`    | `-M realview-pb-a8` | `realview_defconfig` →PBA8/ARMv7-only (needs the ARMv7 toolchain) | zImage |
+| `powerpc`  | `-M g3beige`        | `pmac32_defconfig` +`SERIAL_PMACZILOG[_CONSOLE]`         | vmlinux |
+| `x86_64`   | `-M pc`             | `x86_64_defconfig`                                       | bzImage |
 
 `nix run -f boot.nix runners.k26-<arch>` boots any cell interactively. This is DISTINCT from
 `validate-sweep.nix`, which picks endianness/width-*definite* boards (ip22/ip27/omap3430) that build but
-have no qemu machine — those prove codegen, `boot.nix` proves boot. Two subtleties surfaced by making it
-run, not just eyeball it: MIPS endianness is a Kconfig `choice` (enabling `CPU_BIG_ENDIAN` without
-disabling `CPU_LITTLE_ENDIAN` leaves an `-EL` image); and 2.6.31 PowerMac goes silent at
+have no qemu machine — those prove codegen, `boot.nix` proves boot; for the hard arches the win was
+picking the period-correct model qemu *does* emulate (64-bit BE malta for `mips64eb`, a Cortex-A8
+`realview-pb-a8` for `armhf`) instead of the endianness-definite board. Four subtleties surfaced by making
+it *run*, not just eyeball it: (1) MIPS endianness/width are Kconfig `choice`s — enabling the wanted symbol
+without disabling the default leaves the old `-EL`/32-bit image; (2) 2.6.31 PowerMac goes silent at
 `turn off boot console udbg0` unless the escc console is built in (its `=m` default is a module, and
-`keep_bootcon` postdates 2.6.31). Omitted (no usable qemu machine, codegen proven via a sibling):
-`mips64eb` (SGI IP27), `powerpc64` (qemu pseries postdates 2.6.31), `armhf` (OMAP3430).
+`keep_bootcon` postdates 2.6.31); (3) `armhf` needs its own `--with-arch=armv7-a` toolchain (else gas
+rejects the ARMv7 `isb`/`dsb` in `cache-v7.S`) **and** a PBA8-only config (`realview_defconfig` is
+multi-board; the v6 boards keep `CPU_V6` on and `arch/arm/Makefile` lets the v6 `-march` override v7).
+
+**`powerpc64` is the one exception — a firmware wall, not a board or toolchain gap.** Exposed as a
+build-only kernel (`kernels.k26-powerpc64`, the PowerMac G5 / 970 `g5_defconfig`): it compiles clean and
+its `prom_init` runs, but no qemu ppc64 firmware boots a 2.6.31 ppc64 kernel — `-M mac99 -cpu 970`'s
+OpenBIOS can't satisfy the kernel's device-tree `claim` (`No memory for flatten_device_tree`), and
+`-M pseries`'s SLOF/PAPR platform postdates 2.6.31. Its codegen is cross-validated by `powerpc` (ppc32,
+same gcc 4.4.7), which boots.
 
 The sweep drove the **boot-image outputs** emitted by `kernel.nix`: ARM's ELF `vmlinux` entry is a
 *virtual* address that qemu/bootloaders can't jump to before the MMU is on (MIPS boots vmlinux directly

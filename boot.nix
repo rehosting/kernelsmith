@@ -15,11 +15,21 @@
 # kernel reaches the point where it looks for / fails to find a root fs (we boot
 # with no rootfs on purpose); that panic is the success marker.
 #
-# Cells with NO usable qemu machine are omitted here (documented, not oversights):
-#   - mips64eb : SGI IP27 (Origin) has no qemu machine; codegen proven via mips64el.
-#   - powerpc64: qemu -M pseries emulates a modern PAPR LPAR whose in-kernel support
-#                postdates 2.6.31 (SLOF can't hand off); codegen proven via powerpc.
-#   - armhf    : k2.6 armhf targets OMAP3430, not in qemu; toolchain == armel's.
+# 8 of the 9 kernel-capable k2.6 arches boot here. The trick for the "hard" ones
+# was picking the period-correct model qemu DOES emulate, not the endianness-
+# definite board validate-sweep uses: mips64eb boots a 64-bit big-endian malta
+# (not SGI IP27), armhf boots a Cortex-A8 realview-pb-a8 (not OMAP3430).
+#
+# ONE arch can't boot on ANY qemu ppc64 machine at 2.6.31 — and it's a FIRMWARE
+# wall, not a board or toolchain gap (the kernel builds clean and its prom_init
+# runs). `powerpc64Kernel` below still BUILDS the g5 (PowerMac G5, 970) kernel to
+# prove that, but there's no boot test:
+#   - mac99 + -cpu 970: OpenBIOS's OF `claim` can't satisfy the kernel's device-tree
+#     flatten ("No memory for flatten_device_tree (no room)") — OpenBIOS ppc64 CI
+#     support is too thin for a 2.6.31 G5 kernel.
+#   - pseries: SLOF + the in-kernel PAPR platform postdate 2.6.31 (SLOF can't hand
+#     off — stuck at the "0 >" Forth prompt).
+# ppc64 codegen is cross-validated by powerpc (ppc32), which boots on the same gcc.
 { }:
 let
   flake = builtins.getFlake (toString ./.);
@@ -94,6 +104,42 @@ let
       qemuSystem = "qemu-system-x86_64"; machine = "pc"; cpu = null;
       mem = "256M"; cmdline = "console=ttyS0"; extraArgs = "";
     };
+
+    # The three below were previously "omitted (no qemu machine)" — but that was a
+    # BOARD choice, not a toolchain gap. Each has a period-correct model qemu DOES
+    # emulate; we just weren't using it. The kernels always built; now they boot.
+
+    # SGI IP27 (validate-sweep's endianness-definite ip27) has no qemu model, but a
+    # 64-bit big-endian malta does (qemu-system-mips64 -M malta). Flip the 32-bit LE
+    # malta_defconfig to 64-bit BE (both are Kconfig `choice`s → enable the wanted,
+    # disable the default, or oldconfig keeps 32BIT/LE). Exercises the mips64 BE ABI
+    # that mips64el only covers little-endian.
+    mips64eb = {
+      defconfig = "malta_defconfig";
+      configEnable = [ "64BIT" "CPU_MIPS64_R1" "CPU_BIG_ENDIAN" ];
+      configDisable = [ "32BIT" "CPU_MIPS32_R2" "CPU_LITTLE_ENDIAN" ];
+      qemuSystem = "qemu-system-mips64"; machine = "malta"; cpu = null;
+      mem = "256M"; cmdline = "console=ttyS0"; extraArgs = "";
+    };
+
+    # OMAP3430 (validate-sweep's omap_3430sdp) isn't in qemu, but the RealView
+    # Platform Baseboard for Cortex-A8 is (-M realview-pb-a8) — a genuine ARMv7 core,
+    # so this is the arch's first real hard-float-capable (ARMv7) kernel boot, vs
+    # armel's ARMv5 versatilepb. realview_defconfig defaults to the V6 boards; switch
+    # it to the A8 platform + V7 cpu. Boots the zImage (ARM virtual vmlinux entry).
+    armhf = {
+      # realview_defconfig is a MULTI-board kernel: the v6 boards (EB/PB11MP/PB1176)
+      # keep CONFIG_CPU_V6 on, and arch/arm/Makefile assigns the v6 -march flag AFTER
+      # the v7 one (`:=`, not `+=`, and v6's line follows v7's), so v6 wins and gas
+      # rejects the ARMv7 `isb`/`dsb` in cache-v7.S. Reduce it to a PBA8-only (v7)
+      # kernel: enable the A8 board + CPU_V7, drop the v6 boards so CPU_V6 deselects
+      # and the v7 -march wins.
+      defconfig = "realview_defconfig";
+      configEnable = [ "MACH_REALVIEW_PBA8" "CPU_V7" ];
+      configDisable = [ "MACH_REALVIEW_EB" "MACH_REALVIEW_PB11MP" "MACH_REALVIEW_PB1176" ];
+      qemuSystem = "qemu-system-arm"; machine = "realview-pb-a8"; cpu = null;
+      mem = "256M"; cmdline = "console=ttyAMA0"; extraArgs = "";
+    };
   };
 
   # buildKernel for one cell — bootable image included via kernel.nix's bootImage.
@@ -107,6 +153,19 @@ let
   };
 
   kernels = lib.mapAttrs mkKernel cells;
+
+  # Build-only: the ppc64 PowerMac G5 (970) kernel. It compiles clean and its
+  # prom_init runs, but no qemu ppc64 firmware boots a 2.6.31 ppc64 kernel (see the
+  # header). g5_defconfig has SERIAL_PMACZILOG off entirely, so build the escc
+  # console in (as ppc32 does). FTRACE stays off via kernel.nix's
+  # kernelConfigDisable["k2.6-powerpc64"] (gcc 4.4 ppc64 ADDR16_HI trampoline).
+  powerpc64Kernel = flake.buildKernel {
+    inherit (k26) version src;
+    arch = "powerpc64";
+    defconfig = "g5_defconfig";
+    configEnable = [ "SERIAL_PMACZILOG" "SERIAL_PMACZILOG_CONSOLE" ];
+    buildModules = false;
+  };
 
   cpuArg = c: lib.optionalString (c.cpu != null) "-cpu ${c.cpu}";
 
@@ -162,11 +221,13 @@ in
 {
   # namespaced so `nix build -f boot.nix tests.k26-mipsel` etc. work
   tests    = lib.mapAttrs' (n: v: { name = "k26-${n}"; value = v; }) tests;
-  kernels  = lib.mapAttrs' (n: v: { name = "k26-${n}"; value = v; }) kernels;
+  # kernels includes the build-only ppc64 G5 (no boot test — firmware-blocked)
+  kernels  = (lib.mapAttrs' (n: v: { name = "k26-${n}"; value = v; }) kernels)
+             // { k26-powerpc64 = powerpc64Kernel; };
   runners  = lib.mapAttrs' (n: v: { name = "k26-${n}"; value = v; }) runners;
 
-  # aggregate boot-test of every bootable cell (one derivation)
+  # aggregate boot-test of every bootable cell (one derivation): 8/9 arches
   all = farm "boot-all" tests;
-  # just the bootable kernels
-  kernels-all = farm "boot-kernels-all" kernels;
+  # every bootable kernel + the build-only ppc64 G5
+  kernels-all = farm "boot-kernels-all" (kernels // { powerpc64 = powerpc64Kernel; });
 }

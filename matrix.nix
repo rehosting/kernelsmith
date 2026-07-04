@@ -65,13 +65,17 @@ rec {
     gccVer = "4.4.7"; binutilsVer = "2.27"; gmpVer = "4.3.2"; mpfrVer = "2.4.2";
   };
   # Arches PROVEN to build a 2.6.31 kernel on this toolchain (README band sweep).
-  # Plain -linux triples (no libc). armel+armhf share one soft-float arm toolchain
-  # (the kernel is soft-float, so it builds the VFP target's kernel fine).
+  # Plain -linux triples (no libc). armel is bare arm-linux-gnueabi (ARMv5 default,
+  # boots the versatilepb ARMv5 board); armhf adds --with-arch=armv7-a so the
+  # assembler accepts the ARMv7 barrier ops (isb/dsb/dmb) that a Cortex-A8 kernel's
+  # cache-v7.S emits — without it gas rejects them "in ARM mode". The kernel is
+  # soft-float either way (float is a userland-ABI concern); armhf's ARMv7 lets it
+  # boot the realview-pb-a8 (Cortex-A8) machine armel's ARMv5 image can't.
   # All 9 kernel-capable k2.6 arches are covered. buildKernel falls back to the
   # musl era toolchain for any arch not listed (none, currently).
   k26KernelArches = {
     armel    = { target = "arm-linux-gnueabi"; };
-    armhf    = { target = "arm-linux-gnueabi"; };
+    armhf    = { target = "arm-linux-gnueabi"; withArch = "armv7-a"; };
     mipsel   = { target = "mipsel-linux";   withArch = "mips32r2"; };
     mipseb   = { target = "mips-linux";     withArch = "mips32r2"; };
     mips64eb = { target = "mips64-linux"; };   # ip27 (SGI Origin, R10000) sets its own -march
