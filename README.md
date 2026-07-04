@@ -28,9 +28,10 @@ versions as build targets without rebuilding anything you've seen.
 | `flake.nix` | inputs + outputs: the era×arch toolchain matrix, `buildKernel`, `toolchainFor`, a dev shell with `kbuild <ver> <arch>` |
 | `resolve.nix` | `kernelVersion → era` via version bands (the gcc-floor dispatch) — **sourcing-agnostic** |
 | `matrix.nix` | the data: kernel eras (gcc/binutils/musl bundles) × 12 arch triples + per-arch quirks |
-| `mk-cross-toolchain.nix` | builds one (arch, versions) toolchain |
+| `mk-cross-toolchain.nix` | builds one (arch, versions) **musl** toolchain (userland; and the k3+ kernel bands) |
+| `mk-kernel-toolchain.nix` | builds one **kernel-only, no-libc** period toolchain (the k2.6 kernel band — see the reframe below) |
 | `sources.nix` | pinned component / toolchain inputs |
-| `kernel.nix` | `buildKernel { version, arch, src, config }` — auto-resolves the toolchain |
+| `kernel.nix` | `buildKernel { version, arch, src, config }` — auto-resolves the toolchain (kernel toolchain for k2.6, else musl) |
 
 ## Status: full matrix building — Bootlin bands pinned + from-source matrix filled
 
@@ -153,7 +154,7 @@ k2.6 *toolchain* row green, and gets ARM + powerpc *kernels* building, but the m
 solid. Prioritize the rest by firmware need. Fallback if a given arch's from-source path stays
 painful: **kernel.org crosstool** ships prebuilt gcc 4.9 (kernel-build-only, glibc).
 
-### Testing a *truly* period-correct gcc 4.4.7 — and why 4.9.4 is actually the floor (2026-07-03)
+### Testing a *truly* period-correct gcc 4.4.7 — the musl wall, then the kernel-only reframe (2026-07-03)
 
 The open question was whether an even more era-matched **gcc 4.4.7** (what 2.6.31 was literally built
 with) would clear the residual kernel-source failures (`page.c` alias, etc.) with *fewer* shims than
@@ -171,24 +172,90 @@ things came out of it, one expected and one decisive:
   `bits/alltypes.h` fails with `duplicate 'unsigned'` / `two or more data types`. Same sysroot gcc
   4.9.4 parsed cleanly; only the compiler version changed.
 
-**Conclusion (a correction to the prior "true gcc-4.x is the highest-leverage fix" hypothesis):** it is
-*not*. musl-cross-make blesses a specific set of gcc versions precisely because each needs a maintained
-(gcc × musl) compatibility patch set. **gcc 4.9.4 is the *oldest* gcc that cleanly consumes modern musl
-1.1.24** — going below it doesn't reduce shims, it *leaves the supported envelope* and trades a few
-kernel-source patches for an open-ended musl-header porting burden. So 4.9.4 isn't a compromise short of
-"period-correct"; for a musl toolchain it **is** the practical period floor. The right lever for the
-residual k2.6 kernels is therefore per-arch **kernel-source** patches (or crosstool's glibc gcc-4.9),
-**not** an older compiler. (The two gcc-4.4 fixes found — gnu89-host and the siginfo one-liner — are
-recorded here so a future glibc-target re-attempt is cheap; they were reverted from the tree since the
-musl path is a dead end.)
+**Conclusion (scoped to a *musl* toolchain):** musl-cross-make blesses a specific set of gcc versions
+precisely because each needs a maintained (gcc × musl) compatibility patch set. **gcc 4.9.4 is the
+*oldest* gcc that cleanly consumes modern musl 1.1.24** — going below it doesn't reduce shims, it
+*leaves the supported envelope* and trades a few kernel-source patches for an open-ended musl-header
+porting burden. For a *musl* toolchain, 4.9.4 **is** the practical period floor.
 
-Next: (a) ~~true gcc-4.x for k2.6~~ **[tested & rejected above — 4.9.4 is the musl floor]**;
-(b) a **`-Wno-error` compiler wrapper** (appends the flag *last*,
-defeating `-Werror` wherever it is injected — kernel, subdir, or `tools/` — a cleaner general lever than
-the three separate make-var knobs); (c) ppc64-BE `-mabi=elfv1` forcing + vDSO cross-propagation fix;
-(d) build against a *real* firmware kernel config (needs the rehosting `linux` branch + `linux_builder`);
-(e) a `buildModule` entrypoint to compile out-of-tree modules (e.g. igloo_driver) against a *prebuilt*
-`kernel-devel` — i.e. build modules for kernels whose source you don't have; (f) mirror host + `base`.
+### The reframe that unblocks it: kernels don't need a target libc (2026-07-03, decisive)
+
+The wall above was a **musl anachronism, not a gcc-age wall** — musl 1.1.24 (2019) is a decade newer than
+2.6.31 (2009), and the **kernel is built `-nostdinc -ffreestanding`: it needs no target libc at all**
+(libgcc ships *inside* gcc). musl only matters for *userland* (busybox, guest utils). So the k2.6
+toolchain splits by purpose:
+
+- **Kernel band:** build period gcc `--without-headers --with-newlib` (**no musl**). Tested for mipsel:
+  gcc 4.4.7 builds clean on a 2026 host (one incidental snag — modern texinfo can't render gcc 4.4 docs,
+  so `MAKEINFO=true`), and then compiles stock **2.6.31 `malta_defconfig` to a 5 MB `vmlinux` with
+  *zero* k2.6 source shims** — no tree-wide `-Werror` strip, no `-fgnu89-inline`, no `KCFLAGS=-Wno-error`.
+  The era-correct compiler doesn't need placating; those shims only ever existed to appease a compiler
+  *newer* than the tree.
+- **Userland band:** keep gcc 4.9.4 + musl 1.1.24 (the floor established above). Userland needn't be
+  period-correct — it just has to run on the emulated kernel.
+
+**This turns a red cell green, not merely prettier.** In-session control on the *same* tree/defconfig:
+gcc 4.9.4 (current k2.6 toolchain, *with* all shims) **fails** — `arch/mips/mm/page.c:108: error:
+'copy_page' alias in between function and variable is not supported` (a hard *error*, so `-Wno-error`
+can't touch it) — while period gcc 4.4.7 (no shims) **succeeds**. Corrects a doc bug: `matrix.nix` blamed
+gcc ≥5 for the `page.c` alias, but 4.9.4 (<5) rejects it too; the idiom's ceiling is ≤4.4. So the recurring
+"true gcc-4.x for k2.6" NEXT item is **confirmed, not rejected** — scoped to a kernel-only (no-libc)
+toolchain, now **landed** as `mk-kernel-toolchain.nix` (period gcc 4.4.7) + the `matrix.k26Kernel` band;
+`buildKernel` auto-uses it for 2.6.x kernels while `toolchainFor` keeps the musl userland toolchain.
+Build them all with `nix build .#k26-kernel-all`.
+
+**Band sweep — all k2.6 arches, period gcc 4.4.7 (kernel-only), `bare` = every k2.6 source shim
+stripped, `shims` = the existing `-Wno-error`/frame-size net kept:**
+
+| arch | toolchain | bare | +shims | verdict |
+|------|:--:|:--:|:--:|------|
+| armel | ✅ | ✅ 3.9 MB | ✅ | green either way |
+| armhf | ✅ | ✅ 7.0 MB | ✅ | green either way |
+| mipsel | ✅ | ✅ 5.0 MB | ✅ | **was RED on 4.9.4** (`page.c` hard error) → period gcc fixes it |
+| mipseb | ✅ | ✅ 4.0 MB | ✅ | bare, no shims |
+| mips64eb | ✅ | ✅ 6.0 MB | ✅ | added in the completeness pass (`ip27`) |
+| mips64el | ✅ | ✅ 5.8 MB | ✅ | added in the completeness pass (`fuloong2e`) |
+| powerpc (32) | ✅ | ❌ | ✅ 7.6 MB | frame-size warning→error (gcc 4.4 bigger frames, a *too-old* artifact); `-Wno-error` net demotes it |
+| powerpc64 | ✅ | ❌ | ✅ 13.3 MB | `pseries_defconfig` + `FTRACE` off (`kernel.nix` `kernelConfigDisable`): the function-graph tracer's return trampoline is the *only* `R_PPC64_ADDR16_HI` overflow (gcc 4.4 predates ppc64's medium code model); dropping that debug feature links clean |
+| x86_64 | ✅ (native) | — | ✅ 17.6 MB | built as a genuine **native** gcc (target==host): a cross-with-newlib hits gcc's native-detection trap and an `-elf` triple omits the `__linux__`/OS predefines 2.6.31's x86 `.S` needs. Native gcc 4.4 + 3 sandbox fixes (fixincludes header dir, `struct ucontext`, `CPATH`) → clean |
+
+Two corrections this surfaced: (1) ppc64 is **not** blocked by the make `"mixed implicit and normal
+rules"` error — testing a period `make` (`gnumake42` = 4.2.1) proved those messages are *non-fatal* (the
+fatal form is make ≥3.82; truly-period 3.81 is the hard-to-build-on-a-modern-host one), and the build
+dies later at the linker regardless of make version; (2) the ppc64 reloc overflow is **not** iSeries-
+specific (`pseries_defconfig` hits it too). Also, the `bare` column refined the thesis: the `-Wno-error`
+net is **not** purely about appeasing a *too-new* gcc — ppc32's frame-size error is a *too-old* artifact —
+so it's a general "this isn't the exact gcc the tree was tuned for" absorber, warranted for **any** gcc.
+
+**Net:** band-wide period gcc 4.4.7 + the shim net is **green for all 9 kernel-capable arches** — arm×2,
+mips×4 (32+64, both endians), ppc32, ppc64 (pseries + FTRACE off), and x86_64 (native gcc). The
+non-negotiable win is **mips**, where period gcc removes a *hard error* (`page.c`) that no warning-demotion
+can touch; the counterintuitive one is **x86_64** — "host==target" makes it the *awkward* case for a
+cross-build system, and the fix was to stop fighting it as a cross and build a genuine native gcc.
+
+### Completeness pass — #5/#6/#7 (2026-07-03)
+
+- **#6 mips64eb/el [DONE]** — added to the kernel band; both build `vmlinux` via the real entrypoint
+  (6.0/5.8 MB). MIPS is now complete (4 cells).
+- **#7 `-Wno-error` compiler wrapper [DONE]** — `kernel.nix`'s `ccShim` wraps the cross gcc **and** the
+  host cc so `-Wno-error` lands *last* on every compile, defeating `-Werror` wherever the tree injects it.
+  This replaced three fragile knobs: `KCFLAGS=-Wno-error`, the tree-wide `-Werror` strip sed, and the
+  `-Wno-error` inside `HOSTCFLAGS` (whose override-vs-append semantics flip at 4.19 — now irrelevant).
+  Only the real host quirk `-fcommon` (k3 dtc) stays in `HOSTCFLAGS`. Revalidated: k2.6-mipsel/powerpc,
+  k4-mipsel, k6-mipsel all green (k3-mipsel blocked only by a transient v3.x source-download failure).
+- **#5 ppc64 [DONE], x86_64 [DONE]** — both landed. ppc64: the `R_PPC64_ADDR16_HI` link overflow came
+  *only* from the function-graph tracer's return trampoline (gcc 4.4 predates ppc64's medium code model);
+  `pseries_defconfig` + `FTRACE` off (`kernel.nix` `kernelConfigDisable`) → 13.3 MB `vmlinux`. Disproved
+  two red herrings: *not* the make mixed-rules error (period `gnumake42` proved those non-fatal) nor
+  iSeries-specific. x86_64: the `-elf` detour was the trap — it omits `__linux__`, so 2.6.31's x86 `.S`
+  mis-preprocesses. Built a genuine **native** gcc 4.4 instead (`mk-kernel-toolchain.nix` `native` mode),
+  clearing three sandbox walls a native ancient-gcc build assumes away — fixincludes' `/usr/include`
+  (patch `NATIVE_SYSTEM_HEADER_DIR`), `struct ucontext` (glibc ≥2.26), and the in-build `xgcc`'s header
+  search for target-libgcc's CPP check (`CPATH`). → 17.6 MB `vmlinux` via the real entrypoint.
+
+Next: (a) build against a *real* firmware kernel config (needs the rehosting `linux` branch +
+`linux_builder`); (b) a `buildModule` entrypoint to compile out-of-tree modules (e.g. igloo_driver)
+against a *prebuilt* `kernel-devel`; (c) mirror host + `base`.
 
 ## Tarball mirror (reproducibility)
 

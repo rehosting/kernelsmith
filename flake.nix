@@ -26,6 +26,22 @@
         mcmSrc = musl-cross-make;
       };
 
+      # Kernel-only (no-libc) period toolchains for the k2.6 kernel band. Keyed
+      # "k2.6-<arch>" so buildKernel can prefer them over the musl era toolchain.
+      mkKernelToolchain = import ./mk-kernel-toolchain.nix { inherit pkgs sources; };
+      kernelToolchains = lib.mapAttrs'
+        (archName: ka: {
+          name = "k2.6-${archName}";
+          value = mkKernelToolchain ({
+            name = "${archName}-k2.6";
+            inherit (ka) target;
+            withArch = ka.withArch or null;
+            native = ka.native or false;
+            inherit (matrix.k26Kernel) gccVer binutilsVer gmpVer mpfrVer;
+          });
+        })
+        matrix.k26KernelArches;
+
       # Primary sourcing path for k3/k4/k6: vendored Bootlin prebuilt toolchains.
       mkBootlinToolchain = import ./mk-bootlin-toolchain.nix { inherit pkgs; };
       bootlinSources = import ./bootlin-sources.nix { inherit pkgs; };
@@ -69,7 +85,7 @@
       # The unified entrypoint: (version, arch, src, config) -> kernel, with the
       # toolchain auto-resolved from the version. This is the "move between
       # kernel versions as targets" function.
-      buildKernel = import ./kernel.nix { inherit pkgs toolchains resolve; };
+      buildKernel = import ./kernel.nix { inherit pkgs toolchains kernelToolchains resolve; };
 
       # Resolve a toolchain straight from a kernel version + arch, for callers
       # (igloo_driver module builds, ad-hoc shells) that just want the compiler.
@@ -92,6 +108,12 @@
         k26-all = pkgs.linkFarm "k26-all"
           (lib.mapAttrsToList (n: _: { name = n; path = mcmToolchains.${n}; })
             (lib.filterAttrs (n: _: lib.hasPrefix "k2.6-" n) mcmToolchains));
+
+        # The period-correct KERNEL-only toolchains for the k2.6 band (no libc),
+        # the arches proven in the README band sweep. Distinct from k26-all (musl
+        # userland). `nix build .#k26-kernel-all` builds all of them.
+        k26-kernel-all = pkgs.linkFarm "k26-kernel-all"
+          (lib.mapAttrsToList (n: v: { name = n; path = v; }) kernelToolchains);
 
         # The Bootlin-uncovered MODERN cells: musl-cross-make is the only source.
         # mips64eb/el + powerpcle at every modern band (no Bootlin musl for them),

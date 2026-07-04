@@ -54,6 +54,41 @@ rec {
     };
   };
 
+  # ---- k2.6 KERNEL band (period gcc 4.4.7, kernel-only, no libc) ----
+  # A SEPARATE toolchain from the musl `eras.k2.6` userland one above. buildKernel
+  # uses this for 2.6.x kernels; `toolchainFor` (userland) still uses the musl era.
+  # gcc 4.4.7 is 2.6.31's actual-era compiler; kernel-only (--without-headers
+  # --with-newlib) sidesteps the musl-header wall that bars gcc <4.9. It fixes the
+  # mips page.c hard error (a red cell on 4.9.4) and is period-correct for the band.
+  # See mk-kernel-toolchain.nix + README "kernel-only reframe".
+  k26Kernel = {
+    gccVer = "4.4.7"; binutilsVer = "2.27"; gmpVer = "4.3.2"; mpfrVer = "2.4.2";
+  };
+  # Arches PROVEN to build a 2.6.31 kernel on this toolchain (README band sweep).
+  # Plain -linux triples (no libc). armel+armhf share one soft-float arm toolchain
+  # (the kernel is soft-float, so it builds the VFP target's kernel fine).
+  # All 9 kernel-capable k2.6 arches are covered. buildKernel falls back to the
+  # musl era toolchain for any arch not listed (none, currently).
+  k26KernelArches = {
+    armel    = { target = "arm-linux-gnueabi"; };
+    armhf    = { target = "arm-linux-gnueabi"; };
+    mipsel   = { target = "mipsel-linux";   withArch = "mips32r2"; };
+    mipseb   = { target = "mips-linux";     withArch = "mips32r2"; };
+    mips64eb = { target = "mips64-linux"; };   # ip27 (SGI Origin, R10000) sets its own -march
+    mips64el = { target = "mips64el-linux"; }; # fuloong2e (Loongson 2E)
+    powerpc  = { target = "powerpc-linux"; };
+    # ppc64 builds with pseries_defconfig + FTRACE off (kernel.nix's
+    # kernelConfigDisable) — see that note. gcc 4.4 defaults ppc64 to ELFv1
+    # (correct for 2.6.31); the medium-code-model gap only bites the ftrace
+    # trampoline, which we drop.
+    powerpc64 = { target = "powerpc64-linux"; };
+    # x86_64: target CPU == the x86_64-linux build host, so build a genuine NATIVE
+    # gcc (native=true) rather than a cross — a cross-with-newlib hits gcc's
+    # native-detection libgcc trap, and an -elf triple omits the linux OS
+    # predefines 2.6.31's x86 .S files need. See mk-kernel-toolchain.nix native mode.
+    x86_64 = { target = "x86_64-linux"; native = true; };
+  };
+
   # The 12 architectures, as mcm target triples + per-arch config.mak quirks.
   arches = {
     armel        = { target = "arm-linux-musleabi"; };

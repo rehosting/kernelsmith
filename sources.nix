@@ -58,6 +58,19 @@ in
   "linux-4.19.90" = fetch "https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.19.90.tar.xz"
     "sha256-KdhsCm2vFp7AtLQqEvjVXciUxSvZAfh29SoFkGpc9/0=";
 
+  # ---- k2.6 KERNEL band: truly period-correct gcc 4.4.7 (2.6.31's actual-era
+  # compiler), built kernel-only via --without-headers --with-newlib (NO musl).
+  # This is a separate toolchain from the musl userland one above: the kernel is
+  # freestanding (needs no libc), so a period gcc dodges the musl-header wall that
+  # bars gcc <4.9. gcc 4.4 predates MPC (added in 4.5) and needs the era GMP/MPFR.
+  # See mk-kernel-toolchain.nix + the README "kernel-only reframe" section.
+  "gcc-4.4.7" = fetch (gnu "gcc/gcc-4.4.7/gcc-4.4.7.tar.bz2")
+    "sha256-X/dRFrj3Y/oPtWIa+A/G+z6g8bGldSCHSYLwPybNYH8=";
+  "gmp-4.3.2" = fetch (gnu "gmp/gmp-4.3.2.tar.bz2")
+    "sha256-k2FiwDEohsIVgQAreZMoKaoEjPr5k3xiZa6qFPHNF3U=";
+  "mpfr-2.4.2" = fetch (gnu "mpfr/mpfr-2.4.2.tar.bz2")
+    "sha256-x+daCKjUnSCC5MruFZGgXRG51WJ1FOZ48C1moSS88ro=";
+
   # ---- k3 era (gcc 6.5.0): reuses the k2.6 binutils/musl/gmp/mpc/mpfr/linux ----
   "gcc-6.5.0" = fetch (gnu "gcc/gcc-6.5.0/gcc-6.5.0.tar.xz")
     "sha256-fvF5bOSX6JR5GDcCY1sUu3pGtTJJIJpeD5mb6/R0CUU=";

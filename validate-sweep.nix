@@ -61,7 +61,10 @@ let
       mips64eb = "ip27_defconfig";
       mips64el = "fulong_defconfig";        # pre-rename spelling of fuloong2e
       powerpc = "pmac32_defconfig";
-      powerpc64 = "ppc64_defconfig";
+      # pseries (not ppc64_defconfig): the kitchen-sink ppc64_defconfig drags in
+      # the legacy iSeries platform, whose exception.o has its own ADDR16_HI
+      # overflow. pseries is the realistic ppc64 target; + FTRACE off (kernel.nix).
+      powerpc64 = "pseries_defconfig";
       x86_64 = "x86_64_defconfig";
     };
     k3 = {

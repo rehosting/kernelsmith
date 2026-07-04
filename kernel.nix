@@ -6,7 +6,7 @@
 # toolchain matrix. The actual kernel-build quirk handling (per-era patches,
 # HOSTCC fixups) lives in `eraQuirks` — stubbed here; this is where the inherent
 # old-kernel pain accretes as you widen the version range.
-{ pkgs, toolchains, resolve }:
+{ pkgs, toolchains, resolve, kernelToolchains ? { } }:
 
 {
   version, # e.g. "3.18.140"
@@ -24,11 +24,41 @@ let
   inherit (pkgs) lib stdenv;
 
   eraName = resolve.eraFor version;
-  toolchain = toolchains."${eraName}-${arch}" or (throw
+  # Prefer a period-correct KERNEL-only toolchain (k2.6 band, no libc) where one
+  # exists for this arch; otherwise use the musl era toolchain. The fallback keeps
+  # every arch without a proven kernel toolchain exactly as it was (no regression).
+  kernelKey = "${eraName}-${arch}";
+  toolchain = kernelToolchains.${kernelKey} or toolchains."${eraName}-${arch}" or (throw
     "buildKernel: no toolchain for era ${eraName} arch ${arch} (kernel ${version})");
 
   # mcm target triple -> kernel CROSS_COMPILE prefix
   crossPrefix = "${toolchain.target}-";
+
+  # -Wno-error compiler shim. Wraps the CROSS gcc and the HOST cc so every
+  # invocation gets `-Wno-error` appended LAST — defeating `-Werror` no matter
+  # where the tree injects it (top Makefile, arch/subdir Makefile, or tools/),
+  # because a trailing flag wins. This is one lever replacing three fragile knobs:
+  # `KCFLAGS=-Wno-error` (which a subdir `-Werror` appended *after* it defeats),
+  # the tree-wide `-Werror` strip sed, and the `-Wno-error` inside HOSTCFLAGS
+  # (whose OVERRIDE-vs-APPEND semantics flip at 4.19). Real flags (e.g. -fcommon
+  # for old host dtc) stay in HOSTCFLAGS. The shim only shadows the compiler; ld/
+  # as/objcopy resolve to the real toolchain (later on PATH). We build kernels, we
+  # don't lint them — demoting -Werror is always safe here, for any era/gcc.
+  ccShim = pkgs.runCommand "kernelsmith-ccshim-${arch}" { } ''
+    mkdir -p $out/bin
+    for n in gcc cc g++ c++; do
+      if [ -x ${toolchain}/bin/${crossPrefix}$n ]; then
+        { echo '#!${pkgs.runtimeShell}'
+          echo 'exec ${toolchain}/bin/${crossPrefix}'"$n"' "$@" -Wno-error'
+        } > $out/bin/${crossPrefix}$n
+        chmod +x $out/bin/${crossPrefix}$n
+      fi
+    done
+    { echo '#!${pkgs.runtimeShell}'
+      echo 'exec ${pkgs.stdenv.cc}/bin/cc "$@" -Wno-error'
+    } > $out/bin/kernelsmith-hostcc
+    chmod +x $out/bin/kernelsmith-hostcc
+  '';
 
   # matrix arch key -> kernel ARCH= value
   kernelArch = {
@@ -39,34 +69,22 @@ let
     x86_64 = "x86_64";
   }.${arch} or (throw "buildKernel: no kernel ARCH mapping for ${arch}");
 
-  # Per-era build quirks (old trees fight modern host + cross tools). The theme:
-  # a NEWER gcc than a tree was written for invents diagnostics the tree trips on
-  # under its own -Werror. We build kernels, we don't lint them, so we demote the
-  # anachronistic errors rather than patch each site. Two axes:
-  #   KCFLAGS   -> appended to the CROSS (target) compile — for gcc>=5 warnings in
-  #                kernel C (unused-but-set-variable, aliased-declaration, ...).
-  #   HOSTCFLAGS-> the HOST-tool compile (dtc/objtool/... built with nixpkgs gcc13):
-  #                -fcommon undoes gcc>=10's -fno-common default that breaks old
-  #                host tools' tentative definitions (dtc's `yylloc`); -Wno-error
-  #                clears gcc>=12 host warnings (objtool use-after-free, OpenSSL-3
-  #                deprecations). NOTE the semantics flip across eras: pre-4.19
-  #                `HOSTCFLAGS` OVERRIDES the tree's host flags (so k3 must restate
-  #                the 3.18 defaults), >=4.19 it APPENDS to KBUILD_HOSTCFLAGS.
-  # `hostCFlags` is kept OUT of `extraMake` because it can contain spaces (the
-  # 3.18 default set restated below), and the build make calls expand $makeFlags
-  # unquoted; a spaced value would word-split (e.g. `-O2` misread as make's own
-  # `-O`utput-sync). It is threaded in as a single quoted `HOSTCFLAGS=...` token.
+  # Per-era build quirks (old trees fight modern host + cross tools). The whole
+  # `-Werror` axis is now handled by `ccShim` above (trailing -Wno-error on both
+  # cross + host compiles), so it's gone from here. What remains is the ONE real
+  # host-flag quirk the shim can't express: -fcommon. gcc>=10 defaults to
+  # -fno-common, which breaks old host tools' tentative definitions (dtc's
+  # `yylloc`); k3's 3.18 dtc needs it. Because pre-4.19 `HOSTCFLAGS` OVERRIDES the
+  # tree's host flags (>=4.19 it appends), k3 must restate the 3.18 defaults
+  # alongside -fcommon. `hostCFlags` is threaded in as a single quoted
+  # `HOSTCFLAGS=...` token (it can contain spaces, which would word-split the
+  # unquoted $makeFlags expansion).
   eraQuirks = {
-    "k2.6" = { patches = [ ]; extraMake = [ "KBUILD_NOPEDANTIC=1" "KCFLAGS=-Wno-error" ]; hostCFlags = ""; };
-    "k3" = { patches = [ ]; extraMake = [ "KCFLAGS=-Wno-error" ];
-      # 3.18's `HOSTCFLAGS` OVERRIDES (pre-4.19 semantics), so restate its
-      # defaults, then add -fcommon (gcc>=10 -fno-common breaks dtc's `yylloc`)
-      # and -Wno-error.
-      hostCFlags = "-Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer -std=gnu89 -fcommon -Wno-error"; };
-    # >=4.19 `HOSTCFLAGS` APPENDS to KBUILD_HOSTCFLAGS, so a lone -Wno-error is
-    # enough to clear gcc>=12 host warnings (objtool use-after-free, ...).
-    "k4" = { patches = [ ]; extraMake = [ ]; hostCFlags = "-Wno-error"; };
-    "k6" = { patches = [ ]; extraMake = [ ]; hostCFlags = "-Wno-error"; };
+    "k2.6" = { patches = [ ]; extraMake = [ "KBUILD_NOPEDANTIC=1" ]; hostCFlags = ""; };
+    "k3" = { patches = [ ]; extraMake = [ ];
+      hostCFlags = "-Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer -std=gnu89 -fcommon"; };
+    "k4" = { patches = [ ]; extraMake = [ ]; hostCFlags = ""; };
+    "k6" = { patches = [ ]; extraMake = [ ]; hostCFlags = ""; };
   }.${eraName};
 
   # Single quoted make token for the (possibly spaced) host flags, or empty.
@@ -82,6 +100,27 @@ let
     else if eraName == "k2.6" then ''yes "" | make $makeFlags ${hostFlagArg} oldconfig''
     else "make $makeFlags ${hostFlagArg} olddefconfig";
 
+  # Per-(era,arch) Kconfig symbols to force-disable after materializing the
+  # config. Rare, surgical: for cells where an *optional* kernel feature emits
+  # code the period toolchain can't link, and the feature is irrelevant to
+  # rehosting. Currently just ppc64 k2.6: the function-graph tracer's return
+  # trampoline references `ftrace_return_to_handler` via a 32-bit `lis/addi`
+  # (R_PPC64_ADDR16_HI) that overflows at the 64-bit kernel link address — gcc 4.4
+  # predates the medium code model that would use the TOC. Dropping FTRACE (a
+  # debug/profiling feature) is the only ADDR16_HI site in pseries_defconfig, so
+  # the kernel then links clean. (ppc64_defconfig additionally drags in the legacy
+  # iSeries platform, which has its own ADDR16_HI site — use pseries_defconfig.)
+  kernelConfigDisable = {
+    "k2.6-powerpc64" = [ "FTRACE" "FUNCTION_TRACER" "FUNCTION_GRAPH_TRACER" ];
+  }."${eraName}-${arch}" or [ ];
+
+  # scripts/config --disable each, then re-resolve (pipefail-safe: `yes` gets
+  # SIGPIPE when oldconfig closes the pipe).
+  configDisableCmd = lib.optionalString (kernelConfigDisable != [ ]) ''
+    ./scripts/config ${lib.concatMapStringsSep " " (c: "--disable ${c}") kernelConfigDisable}
+    ( set +o pipefail; yes "" | make $makeFlags ${hostFlagArg} oldconfig )
+  '';
+
   # gcc major of the resolved toolchain, for the k2.6 header-dispatch shim.
   gccMajor = lib.versions.major toolchain.gccVer;
 
@@ -90,7 +129,9 @@ stdenv.mkDerivation {
   pname = "linux-${arch}";
   inherit version src;
 
-  nativeBuildInputs = [ toolchain ] ++ (with pkgs; [
+  # ccShim FIRST so its -Wno-error gcc/cc wrappers shadow the real toolchain's
+  # (ld/as/etc. fall through to `toolchain`, later on PATH).
+  nativeBuildInputs = [ ccShim toolchain ] ++ (with pkgs; [
     gnumake bc bison flex openssl.dev elfutils.dev perl cpio gawk
     rsync # modern kernels (>= 5.3) shell out to rsync in `headers_install`
   ]);
@@ -120,33 +161,28 @@ stdenv.mkDerivation {
       sed -i 's/defined(@\([A-Za-z_][A-Za-z0-9_]*\))/@\1/g' kernel/timeconst.pl
     fi
 
-    # gcc >= 5 defaults to C99 (gnu11) inline semantics; 2.6.x assumes gnu89,
-    # so plain `inline` funcs in headers (pin_inotify_watch, …) emit a duplicate
-    # external definition per TU -> "multiple definition" at link. Restore gnu89
-    # inline. (-fno-common is stable anchor text in old top-level Makefiles.)
+    # A gcc that isn't the exact one this 2.6 tree was tuned for defaults to C99
+    # (gnu11) inline semantics; 2.6.x assumes gnu89, so plain `inline` funcs in
+    # headers (pin_inotify_watch, …) emit a duplicate external definition per TU
+    # -> "multiple definition" at link. Restore gnu89 inline. (No-op for the
+    # period gcc 4.4 kernel band, which is gnu89 by default; still needed for the
+    # musl gcc 4.9.4 fallback arches. -fno-common is stable anchor text in old
+    # top-level Makefiles.) Tree-wide -Werror stripping is gone — `ccShim` handles
+    # -Werror uniformly via a trailing -Wno-error on every compile.
     sed -i 's/-fno-common/-fno-common -fgnu89-inline/' Makefile
-
-    # A gcc newer than this 2.6 tree (we use an era-appropriate 4.9.4, but even
-    # that postdates 2.6.31 by years) raises warnings the tree predates — e.g.
-    # -Wunused-but-set-variable (gcc >= 4.6). Several arch subdir Makefiles hard-
-    # code -Werror, which lands AFTER our KCFLAGS=-Wno-error on the compile line
-    # and therefore wins. Strip standalone -Werror tree-wide (the trailing
-    # [[:space:]]/$ guard keeps -Werror-implicit-function-declaration and
-    # -Werror=<x> intact). We build kernels, we don't lint them.
-    find . \( -name Makefile -o -name Kbuild -o -name '*.mk' \) -print0 \
-      | xargs -0 sed -i -E 's/-Werror([[:space:]]|$)/\1/g'
   '';
 
   makeFlags = [
     "ARCH=${kernelArch}"
     "CROSS_COMPILE=${crossPrefix}"
-    "HOSTCC=${pkgs.stdenv.cc}/bin/cc"
+    "HOSTCC=${ccShim}/bin/kernelsmith-hostcc"
   ] ++ eraQuirks.extraMake
     ++ lib.mapAttrsToList (k: v: "${k}=${v}") archMakeVars;
 
   buildPhase = ''
     runHook preBuild
     ${configCmd}
+    ${configDisableCmd}
     make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES
     ${lib.optionalString buildModules "make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES modules"}
     runHook postBuild
