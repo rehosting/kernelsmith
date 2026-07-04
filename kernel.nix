@@ -16,6 +16,13 @@
   defconfig ? null, # an in-tree config make-target, e.g. "versatile_defconfig"
   archMakeVars ? { }, # ARCH= / CROSS_COMPILE handled below; extra make vars here
   buildModules ? true,
+  # Caller-supplied Kconfig fragments applied AFTER the defconfig/.config is
+  # materialized (scripts/config --enable/--disable, then re-resolved). Distinct
+  # from the internal per-(era,arch) `kernelConfigDisable` below (which is about
+  # toolchain link limits); these are for board/boot tailoring — e.g. a bootable
+  # big-endian malta kernel is malta_defconfig + configEnable ["CPU_BIG_ENDIAN"].
+  configEnable ? [ ],
+  configDisable ? [ ],
 }:
 assert (config != null) != (defconfig != null) ||
   throw "buildKernel: pass exactly one of `config` or `defconfig`";
@@ -127,10 +134,14 @@ let
     "k2.6-powerpc64" = [ "FTRACE" "FUNCTION_TRACER" "FUNCTION_GRAPH_TRACER" ];
   }."${eraName}-${arch}" or [ ];
 
-  # scripts/config --disable each, then re-resolve (pipefail-safe: `yes` gets
-  # SIGPIPE when oldconfig closes the pipe).
-  configDisableCmd = lib.optionalString (kernelConfigDisable != [ ]) ''
-    ./scripts/config ${lib.concatMapStringsSep " " (c: "--disable ${c}") kernelConfigDisable}
+  # Full disable set = internal toolchain-driven + caller board/boot fragments.
+  allDisable = kernelConfigDisable ++ configDisable;
+
+  # scripts/config --enable/--disable each, then re-resolve (pipefail-safe: `yes`
+  # gets SIGPIPE when oldconfig closes the pipe).
+  configTuneCmd = lib.optionalString (allDisable != [ ] || configEnable != [ ]) ''
+    ./scripts/config ${lib.concatMapStringsSep " " (c: "--enable ${c}") configEnable} \
+      ${lib.concatMapStringsSep " " (c: "--disable ${c}") allDisable}
     ( set +o pipefail; yes "" | make $makeFlags ${hostFlagArg} oldconfig )
   '';
 
@@ -195,7 +206,7 @@ stdenv.mkDerivation {
   buildPhase = ''
     runHook preBuild
     ${configCmd}
-    ${configDisableCmd}
+    ${configTuneCmd}
     make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES
     ${lib.optionalString (bootImage != null)
       "make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES ${bootImage.target}"}

@@ -253,12 +253,34 @@ cross-build system, and the fix was to stop fighting it as a cross and build a g
   (patch `NATIVE_SYSTEM_HEADER_DIR`), `struct ucontext` (glibc ≥2.26), and the in-build `xgcc`'s header
   search for target-libgcc's CPP check (`CPATH`). → 17.6 MB `vmlinux` via the real entrypoint.
 
-**Boot-validated (plain qemu on the box, no PANDA):** the period-gcc kernels don't just compile, they
-boot. mipsel (`-M malta`, vmlinux), armel (`-M versatilepb`, zImage), and x86_64 (`bzImage`) each reach
-the expected `VFS: Unable to mount root fs` panic (no rootfs supplied) — full init to the root-mount stage,
-banner `Linux version 2.6.31 (gcc version 4.4.7)`. This drove the **boot-image outputs** now emitted by
-`kernel.nix`: ARM's ELF `vmlinux` entry is a *virtual* address that qemu/bootloaders can't jump to before
-the MMU is on (MIPS boots vmlinux directly via KSEG0), so each arch also ships the image it actually boots.
+**Boot-validated, and now automated — `nix build -f boot.nix all`.** The period-gcc kernels don't just
+compile, they boot, and that's a *build target*: `boot.nix` builds each system on a qemu-friendly
+defconfig + fragments, then runs qemu headless in a sandboxed derivation and asserts the boot reached the
+root-fs stage (no rootfs supplied → `VFS: Unable to mount root fs` panic is the success marker). A cell's
+derivation only succeeds if its kernel boots. Six k2.6 cells are green (banner
+`Linux version 2.6.31 (gcc version 4.4.7)`):
+
+| cell | qemu | defconfig (+ fragments) | image |
+|------|------|-------------------------|-------|
+| `mipsel`   | `-M malta`      | `malta_defconfig`                                   | vmlinux |
+| `mipseb`   | `-M malta` (BE) | `malta_defconfig` +`CPU_BIG_ENDIAN` −`CPU_LITTLE_ENDIAN` | vmlinux |
+| `mips64el` | `-M fuloong2e`  | `fulong_defconfig`                                  | vmlinux |
+| `armel`    | `-M versatilepb`| `versatile_defconfig`                               | zImage  |
+| `powerpc`  | `-M g3beige`    | `pmac32_defconfig` +`SERIAL_PMACZILOG[_CONSOLE]`    | vmlinux |
+| `x86_64`   | `-M pc`         | `x86_64_defconfig`                                  | bzImage |
+
+`nix run -f boot.nix runners.k26-<arch>` boots any cell interactively. This is DISTINCT from
+`validate-sweep.nix`, which picks endianness/width-*definite* boards (ip22/ip27/omap3430) that build but
+have no qemu machine — those prove codegen, `boot.nix` proves boot. Two subtleties surfaced by making it
+run, not just eyeball it: MIPS endianness is a Kconfig `choice` (enabling `CPU_BIG_ENDIAN` without
+disabling `CPU_LITTLE_ENDIAN` leaves an `-EL` image); and 2.6.31 PowerMac goes silent at
+`turn off boot console udbg0` unless the escc console is built in (its `=m` default is a module, and
+`keep_bootcon` postdates 2.6.31). Omitted (no usable qemu machine, codegen proven via a sibling):
+`mips64eb` (SGI IP27), `powerpc64` (qemu pseries postdates 2.6.31), `armhf` (OMAP3430).
+
+The sweep drove the **boot-image outputs** emitted by `kernel.nix`: ARM's ELF `vmlinux` entry is a
+*virtual* address that qemu/bootloaders can't jump to before the MMU is on (MIPS boots vmlinux directly
+via KSEG0), so each arch also ships the image it actually boots (`zImage`/`bzImage`/`Image.gz`).
 
 Next: (a) build against a *real* firmware kernel config (needs the rehosting `linux` branch +
 `linux_builder`); (b) a `buildModule` entrypoint to compile out-of-tree modules (e.g. igloo_driver)
