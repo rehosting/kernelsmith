@@ -31,7 +31,7 @@ versions as build targets without rebuilding anything you've seen.
 | `mk-cross-toolchain.nix` | builds one (arch, versions) **musl** toolchain (userland; and the k3+ kernel bands) |
 | `mk-kernel-toolchain.nix` | builds one **kernel-only, no-libc** period toolchain (the k2.6 kernel band — see the reframe below) |
 | `sources.nix` | pinned component / toolchain inputs |
-| `kernel.nix` | `buildKernel { version, arch, src, config }` — auto-resolves the toolchain (kernel toolchain for k2.6, else musl) |
+| `kernel.nix` | `buildKernel { version, arch, src, config }` — auto-resolves the toolchain (kernel toolchain for k2.6, else musl); emits `vmlinux` + the arch's bootable image (ARM `zImage`, x86 `bzImage`, arm64 `Image.gz`) + `kernel-devel` |
 
 ## Status: full matrix building — Bootlin bands pinned + from-source matrix filled
 
@@ -252,6 +252,13 @@ cross-build system, and the fix was to stop fighting it as a cross and build a g
   clearing three sandbox walls a native ancient-gcc build assumes away — fixincludes' `/usr/include`
   (patch `NATIVE_SYSTEM_HEADER_DIR`), `struct ucontext` (glibc ≥2.26), and the in-build `xgcc`'s header
   search for target-libgcc's CPP check (`CPATH`). → 17.6 MB `vmlinux` via the real entrypoint.
+
+**Boot-validated (plain qemu on the box, no PANDA):** the period-gcc kernels don't just compile, they
+boot. mipsel (`-M malta`, vmlinux), armel (`-M versatilepb`, zImage), and x86_64 (`bzImage`) each reach
+the expected `VFS: Unable to mount root fs` panic (no rootfs supplied) — full init to the root-mount stage,
+banner `Linux version 2.6.31 (gcc version 4.4.7)`. This drove the **boot-image outputs** now emitted by
+`kernel.nix`: ARM's ELF `vmlinux` entry is a *virtual* address that qemu/bootloaders can't jump to before
+the MMU is on (MIPS boots vmlinux directly via KSEG0), so each arch also ships the image it actually boots.
 
 Next: (a) build against a *real* firmware kernel config (needs the rehosting `linux` branch +
 `linux_builder`); (b) a `buildModule` entrypoint to compile out-of-tree modules (e.g. igloo_driver)

@@ -69,6 +69,19 @@ let
     x86_64 = "x86_64";
   }.${arch} or (throw "buildKernel: no kernel ARCH mapping for ${arch}");
 
+  # Per-arch bootable image, in addition to the raw `vmlinux`. Some arches don't
+  # boot from the ELF `vmlinux` under a bootloader/qemu: ARM's vmlinux entry is a
+  # *virtual* address (0xc0008000) that's meaningless before the MMU is on, and x86
+  # needs the real-mode `bzImage` setup header. So build+install the decompressed
+  # boot image those arches actually boot. MIPS boots `vmlinux` directly (KSEG0
+  # maps without the MMU) and powerpc's zImage needs a per-platform bootwrapper, so
+  # both stay vmlinux-only here. `{ target; file; }`, or null to skip.
+  bootImage = {
+    arm = { target = "zImage"; file = "arch/arm/boot/zImage"; };
+    arm64 = { target = "Image.gz"; file = "arch/arm64/boot/Image.gz"; };
+    x86_64 = { target = "bzImage"; file = "arch/x86/boot/bzImage"; };
+  }.${kernelArch} or null;
+
   # Per-era build quirks (old trees fight modern host + cross tools). The whole
   # `-Werror` axis is now handled by `ccShim` above (trailing -Wno-error on both
   # cross + host compiles), so it's gone from here. What remains is the ONE real
@@ -184,6 +197,8 @@ stdenv.mkDerivation {
     ${configCmd}
     ${configDisableCmd}
     make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES
+    ${lib.optionalString (bootImage != null)
+      "make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES ${bootImage.target}"}
     ${lib.optionalString buildModules "make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES modules"}
     runHook postBuild
   '';
@@ -193,6 +208,10 @@ stdenv.mkDerivation {
     mkdir -p $out
     # vmlinux + the bits the rehosting flow consumes (kernel-devel for igloo_driver)
     cp vmlinux $out/ 2>/dev/null || true
+    # the arch's bootable image (zImage/bzImage/Image.gz), where it differs from vmlinux
+    ${lib.optionalString (bootImage != null) ''
+      cp ${bootImage.file} $out/ || { echo "boot image ${bootImage.file} missing" >&2; exit 1; }
+    ''}
     ${lib.optionalString buildModules ''
       make $makeFlags INSTALL_MOD_PATH=$out modules_install
     ''}
@@ -200,5 +219,5 @@ stdenv.mkDerivation {
     runHook postInstall
   '';
 
-  passthru = { inherit eraName toolchain; cross = crossPrefix; };
+  passthru = { inherit eraName toolchain; cross = crossPrefix; bootImageFile = if bootImage != null then baseNameOf bootImage.file else "vmlinux"; };
 }
