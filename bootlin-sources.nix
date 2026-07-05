@@ -45,7 +45,7 @@ let
   # (matrix-arch, band, release, sha256) -> { name = "<arch>-<band>"; value = entry; }
   t = arch: band: release: sha256:
     let a = archMap.${arch}; in {
-      # key "<era>-<arch>" to match resolve.toolchainKey / the mcm matrix
+      # key "<era>-<arch>" to match the mcm matrix / resolveToolchain lookup
       name = "${band}-${arch}";
       value = {
         target = a.target;

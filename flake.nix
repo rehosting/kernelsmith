@@ -92,14 +92,26 @@
       # otherwise. Both keyed "<era>-<arch>", so Bootlin simply overrides.
       toolchains = mcmToolchains // bootlinToolchains;
 
+      # THE toolchain resolver — the single source of truth for (version, arch) ->
+      # compiler. A period-correct KERNEL-only toolchain (kernelToolchains: the
+      # whole k2.6 band + k3-powerpc64) wins where one exists; otherwise the
+      # vendored/musl era toolchain. Both `buildKernel` and the ad-hoc
+      # `toolchainFor` route through this, so a kbuild/module build gets the EXACT
+      # compiler (and ABI) buildKernel used — e.g. k3 ppc64's elfv1 kernel gcc, not
+      # the elfv2 Bootlin userland one it would otherwise ABI-mismatch against.
+      resolveToolchain = version: arch:
+        let key = "${resolve.eraFor version}-${arch}";
+        in kernelToolchains.${key} or toolchains.${key} or (throw
+          "resolveToolchain: no toolchain for kernel ${version} arch ${arch}");
+
       # The unified entrypoint: (version, arch, src, config) -> kernel, with the
       # toolchain auto-resolved from the version. This is the "move between
       # kernel versions as targets" function.
-      buildKernel = import ./kernel.nix { inherit pkgs toolchains kernelToolchains resolve; };
+      buildKernel = import ./kernel.nix { inherit pkgs resolve resolveToolchain; };
 
       # Resolve a toolchain straight from a kernel version + arch, for callers
       # (igloo_driver module builds, ad-hoc shells) that just want the compiler.
-      toolchainFor = version: arch: toolchains.${resolve.toolchainKey version arch};
+      toolchainFor = resolveToolchain;
     in
     {
       inherit buildKernel toolchainFor;

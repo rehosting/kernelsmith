@@ -24,6 +24,8 @@ rec {
     in
     if hit == null then throw "resolve: no era band for kernel ${version}" else hit.era;
 
-  # Convenience: (version, arch) -> the toolchain attr name in the matrix.
-  toolchainKey = version: arch: "${eraFor version}-${arch}";
+  # NOTE: to go from (version, arch) to an actual toolchain, use flake.nix's
+  # `resolveToolchain` (or the `toolchainFor` alias) — NOT a bare "<era>-<arch>"
+  # key lookup in `toolchains`, which would miss the kernel-only toolchains
+  # (k2.6 band, k3-powerpc64) and hand back an ABI-mismatched compiler.
 }
