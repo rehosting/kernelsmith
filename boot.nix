@@ -29,6 +29,9 @@ let
     "k2.6" = { version = "2.6.31";
       src = src "https://cdn.kernel.org/pub/linux/kernel/v2.6/linux-2.6.31.tar.xz"
         "02p8kg2n2d6i9r1hkyd7mdbz92xiiz7jpb851bx71w90r8rxzl2a"; };
+    "k3" = { version = "3.18.140";   # last 3.18.y; predates objtool (no thunk_64 issue)
+      src = src "https://cdn.kernel.org/pub/linux/kernel/v3.x/linux-3.18.140.tar.xz"
+        "sha256-GMOJAcUTc4U0NdNkQiwZMe0FILFsxK6UQNeyCVvc4uA="; };
     # 5.10.229 (latest 5.10 stable), NOT 5.10.0: the Bootlin k4 toolchain ships
     # binutils 2.36, which omits the symbol table from empty objects (e.g. an
     # x86_64_defconfig thunk_64.o — no PREEMPTION/IRQ-tracing thunks), and 5.10.0's
@@ -37,6 +40,9 @@ let
     "k4" = { version = "5.10.229";
       src = src "https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.10.229.tar.xz"
         "1q6di05rk4bsy91r03zw6vz14zzcpvv25dv7gw0yz1gzpgkbb9h8"; };
+    "k6" = { version = "6.6";        # 6.6 objtool already tolerates empty objects
+      src = src "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz"
+        "sha256-2SagbGPdisffP4buH/ws4qO4Gi0WhITna1s4mrqOVtA="; };
   };
 
   # "k2.6" -> "k26" for attr/derivation-name friendliness.
@@ -194,6 +200,143 @@ let
         cmdline = "console=hvc0";
       };
     };
+
+    # ---- k3 (gcc ~6.x, 3.18.140): predates the kernel gcc-plugins + objtool, so
+    # x86_64/armhf need none of k4's plugin/objtool workarounds. ----
+    "k3" = {
+      x86_64 = {
+        defconfig = "x86_64_defconfig";
+        qemuSystem = "qemu-system-x86_64"; machine = "pc"; cmdline = "console=ttyS0";
+      };
+      # 3.18 versatile_defconfig is an ATAG (non-DT) kernel — no DTB needed (and
+      # `make dtbs` builds none). k4/k6 versatile is DT-only and DOES need one.
+      armel = {
+        defconfig = "versatile_defconfig";
+        qemuSystem = "qemu-system-arm"; machine = "versatilepb"; mem = "128M";
+        cmdline = "console=ttyAMA0";
+      };
+      armhf = {
+        defconfig = "multi_v7_defconfig";
+        qemuSystem = "qemu-system-arm"; machine = "virt"; cmdline = "console=ttyAMA0";
+      };
+      arm64 = {
+        defconfig = "defconfig";
+        qemuSystem = "qemu-system-aarch64"; machine = "virt"; cpu = "cortex-a53";
+        cmdline = "console=ttyAMA0";
+      };
+      mipsel = {
+        defconfig = "malta_defconfig";
+        qemuSystem = "qemu-system-mipsel"; machine = "malta"; cmdline = "console=ttyS0";
+      };
+      mipseb = {
+        defconfig = "malta_defconfig";
+        configEnable = [ "CPU_BIG_ENDIAN" ]; configDisable = [ "CPU_LITTLE_ENDIAN" ];
+        qemuSystem = "qemu-system-mips"; machine = "malta"; cmdline = "console=ttyS0";
+      };
+      # 3.18's mips64 malta stays silent on -cpu MIPS64R2-generic (some CP0 feature
+      # its setup trips on); a real 5K-family Malta core (5KEc) boots it.
+      mips64el = {
+        defconfig = "malta_defconfig";
+        configEnable = [ "64BIT" "CPU_MIPS64_R2" ]; configDisable = [ "32BIT" "CPU_MIPS32_R2" ];
+        qemuSystem = "qemu-system-mips64el"; machine = "malta"; cpu = "5KEc";
+        cmdline = "console=ttyS0";
+      };
+      mips64eb = {
+        defconfig = "malta_defconfig";
+        configEnable = [ "64BIT" "CPU_MIPS64_R2" "CPU_BIG_ENDIAN" ];
+        configDisable = [ "32BIT" "CPU_MIPS32_R2" "CPU_LITTLE_ENDIAN" ];
+        qemuSystem = "qemu-system-mips64"; machine = "malta"; cpu = "5KEc";
+        cmdline = "console=ttyS0";
+      };
+      powerpc = {
+        # 3.18 pmac32 (like 2.6.31) disables its early console and has no built-in
+        # escc console → silent after "bootconsole [udbg0] disabled". Build it in.
+        defconfig = "pmac32_defconfig";
+        configEnable = [ "SERIAL_PMACZILOG" "SERIAL_PMACZILOG_CONSOLE" ];
+        qemuSystem = "qemu-system-ppc"; machine = "g3beige"; cmdline = "console=ttyS0";
+      };
+      # BUILD-ONLY at k3: builds clean (see the elfv1 note) and modern SLOF loads
+      # the image, but the 3.18 pseries kernel doesn't come up on qemu's modern SLOF
+      # ("Booting from memory…" then silence — a vintage handoff mismatch, same class
+      # as k2.6 ppc64 but milder; era-contemporary pseries-2.x machines don't help).
+      # ppc64 boots fine on k4/k6. The elfv1 fix: 3.18's Makefile does
+      # `cc-option -mabi=elfv2` then unconditionally adds -mcall-aixdesc; the Bootlin
+      # toolchain ACCEPTS elfv2 (BE-only toolchains of the era didn't) so it picks
+      # elfv2 and conflicts with aixdesc — force elfv1 on C+asm (trailing flag wins).
+      powerpc64 = {
+        defconfig = "pseries_defconfig"; buildOnly = true;
+        archMakeVars = { KCFLAGS = "-mabi=elfv1"; KAFLAGS = "-mabi=elfv1"; };
+        qemuSystem = "qemu-system-ppc64"; machine = "pseries"; mem = "1G";
+        cmdline = "console=hvc0";
+      };
+      # NOTE: k3 powerpc64le is a documented gap. 3.18 always builds the 32-bit
+      # vdso32, whose Makefile passes `-mlittle-endian` — a flag the Bootlin ppc64le
+      # gcc doesn't recognize (it wants -mlittle) — and 3.18 has no COMPAT/VDSO32
+      # knob to drop it. A 3.18-era-toolchain mismatch specific to ppc64le; the arch
+      # boots fine on k4 and k6.
+    };
+
+    # ---- k6 (gcc 13.x, 6.6): same modern shape as k4 (plugin/vdso32/mips64-cpu
+    # workarounds); 6.6 objtool already tolerates empty objects, so no .y pin. ----
+    "k6" = {
+      x86_64 = {
+        defconfig = "x86_64_defconfig";
+        qemuSystem = "qemu-system-x86_64"; machine = "pc"; cmdline = "console=ttyS0";
+      };
+      armel = {
+        defconfig = "versatile_defconfig"; dtb = "versatile-pb.dtb";
+        qemuSystem = "qemu-system-arm"; machine = "versatilepb"; mem = "128M";
+        cmdline = "console=ttyAMA0";
+      };
+      armhf = {
+        defconfig = "multi_v7_defconfig"; configDisable = [ "GCC_PLUGINS" ];
+        qemuSystem = "qemu-system-arm"; machine = "virt"; cmdline = "console=ttyAMA0";
+      };
+      arm64 = {
+        defconfig = "defconfig";
+        qemuSystem = "qemu-system-aarch64"; machine = "virt"; cpu = "cortex-a53";
+        cmdline = "console=ttyAMA0";
+      };
+      mipsel = {
+        defconfig = "malta_defconfig";
+        qemuSystem = "qemu-system-mipsel"; machine = "malta"; cmdline = "console=ttyS0";
+      };
+      mipseb = {
+        defconfig = "malta_defconfig";
+        configEnable = [ "CPU_BIG_ENDIAN" ]; configDisable = [ "CPU_LITTLE_ENDIAN" ];
+        qemuSystem = "qemu-system-mips"; machine = "malta"; cmdline = "console=ttyS0";
+      };
+      mips64el = {
+        defconfig = "malta_defconfig";
+        configEnable = [ "64BIT" "CPU_MIPS64_R2" ]; configDisable = [ "32BIT" "CPU_MIPS32_R2" ];
+        qemuSystem = "qemu-system-mips64el"; machine = "malta"; cpu = "MIPS64R2-generic";
+        cmdline = "console=ttyS0";
+      };
+      mips64eb = {
+        defconfig = "malta_defconfig";
+        configEnable = [ "64BIT" "CPU_MIPS64_R2" "CPU_BIG_ENDIAN" ];
+        configDisable = [ "32BIT" "CPU_MIPS32_R2" "CPU_LITTLE_ENDIAN" ];
+        qemuSystem = "qemu-system-mips64"; machine = "malta"; cpu = "MIPS64R2-generic";
+        cmdline = "console=ttyS0";
+      };
+      powerpc = {
+        defconfig = "pmac32_defconfig";
+        qemuSystem = "qemu-system-ppc"; machine = "g3beige"; cmdline = "console=ttyS0";
+      };
+      powerpc64 = {
+        defconfig = "pseries_defconfig";
+        qemuSystem = "qemu-system-ppc64"; machine = "pseries"; mem = "1G";
+        cmdline = "console=hvc0";
+      };
+      powerpc64le = {
+        # 6.6 dropped pseries_le_defconfig; flip pseries_defconfig to LE + drop COMPAT.
+        defconfig = "pseries_defconfig";
+        configEnable = [ "CPU_LITTLE_ENDIAN" ];
+        configDisable = [ "CPU_BIG_ENDIAN" "COMPAT" ];
+        qemuSystem = "qemu-system-ppc64"; machine = "pseries"; mem = "1G";
+        cmdline = "console=hvc0";
+      };
+    };
   };
 
   # ---- machinery ----
@@ -207,6 +350,7 @@ let
     defconfig = c.defconfig;
     configEnable = c.configEnable or [ ];
     configDisable = c.configDisable or [ ];
+    archMakeVars = c.archMakeVars or { };
     dtbs = lib.optional (c ? dtb) c.dtb;
     buildModules = false;   # boot smoke test: kernel image only
   };
@@ -279,7 +423,9 @@ in
   all = farm "boot-all" (lib.attrNames tests);
   # per-band aggregates
   k26 = farm "boot-k26" (bandNames "k26");
+  k3 = farm "boot-k3" (bandNames "k3");
   k4 = farm "boot-k4" (bandNames "k4");
+  k6 = farm "boot-k6" (bandNames "k6");
 
   # every kernel (incl. build-only cells like k2.6 ppc64)
   kernels-all = pkgs.linkFarm "boot-kernels-all"

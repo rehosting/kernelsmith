@@ -23,10 +23,12 @@
   # big-endian malta kernel is malta_defconfig + configEnable ["CPU_BIG_ENDIAN"].
   configEnable ? [ ],
   configDisable ? [ ],
-  # Device-tree blobs to build + install (by make-target basename, e.g.
-  # "versatile-pb.dtb"). Installed to $out/dtbs/<name>. Modern DT-only ARM boards
-  # (versatile, vexpress, …) need one passed to qemu via -dtb; qemu's `virt`
-  # machine synthesizes its own, so it needs none.
+  # Device-tree blob basenames to install to $out/dtbs/<name> (e.g.
+  # "versatile-pb.dtb"). When non-empty we run the `dtbs` make target (builds the
+  # scripts/dtc host tool + every board DTB, version-agnostic — 6.5+ moved ARM DTS
+  # into vendor subdirs, and a bare `make foo.dtb` target won't build dtc first) and
+  # copy the named ones out by basename. Modern DT-only ARM boards (versatile,
+  # vexpress, …) need one passed to qemu via -dtb; qemu's `virt` synthesizes its own.
   dtbs ? [ ],
 }:
 assert (config != null) != (defconfig != null) ||
@@ -216,7 +218,7 @@ stdenv.mkDerivation {
     ${lib.optionalString (bootImage != null)
       "make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES ${bootImage.target}"}
     ${lib.optionalString (dtbs != [ ])
-      "make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES ${lib.concatStringsSep " " dtbs}"}
+      "make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES dtbs"}
     ${lib.optionalString buildModules "make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES modules"}
     runHook postBuild
   '';

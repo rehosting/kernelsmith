@@ -260,14 +260,28 @@ reached the root-fs stage (no rootfs supplied → a `VFS: Unable to mount root f
 marker). A cell's derivation only succeeds if its kernel boots. Per band: `nix build -f boot.nix k4`;
 one cell: `tests.k4-powerpc64`; interactive: `nix run -f boot.nix runners.k4-arm64`.
 
-**k4 (5.10.229, gcc 9.x): all 11 arches boot** — armel/armhf/arm64, mipsel/mipseb/mips64el/mips64eb,
-powerpc/powerpc64/powerpc64le, x86_64. The modern band clears every k2.6 gap: `powerpc64` and
-`powerpc64le` boot on `-M pseries`, armhf and arm64 on the DT-driven `-M virt`. Fixes it surfaced:
-5.10 must be a late `.y` (binutils 2.36 omits the symtab from empty objects like x86_64's `thunk_64.o`,
-which 5.10.0's objtool rejects); `multi_v7` armhf needs `GCC_PLUGINS` off (plugin ABI ≠ the cross gcc);
-ppc64le needs `COMPAT` off (its pure-64-bit LE toolchain can't build the 32-bit vdso); 64-bit malta needs
-`-cpu MIPS64R2-generic` (the default malta CPU is 32-bit → silent); and modern DT-only versatile needs a
-`-dtb` (buildKernel gained a `dtbs` param, installed to `$out/dtbs/`).
+**`nix build -f boot.nix all` boots 39 cells across four eras** (2.6.31 → 6.6):
+
+| band (kernel / gcc) | booting | not booting (still built) |
+|---|---|---|
+| **k2.6** (2.6.31 / 4.4.7) | 8 | `powerpc64` — qemu ppc64 firmware wall |
+| **k3** (3.18.140 / 6.5) | 9 | `powerpc64` (3.18-on-modern-SLOF vintage), `powerpc64le` (3.18 vdso32 `-mlittle-endian` toolchain) |
+| **k4** (5.10.229 / 9.x) | 11 | — |
+| **k6** (6.6 / 13.x) | 11 | — |
+
+k4 and k6 boot **all 11 arches**; the modern bands clear every k2.6 gap (`powerpc64`/`powerpc64le` on
+`-M pseries`, armhf/arm64 on the DT-driven `-M virt`). Fixes the sweep surfaced — each a real
+era×toolchain constraint now encoded in the table:
+- **5.10 must be a late `.y`** (pinned 5.10.229): binutils 2.36 omits the symtab from empty objects (x86_64
+  `thunk_64.o` under `x86_64_defconfig`), which 5.10.0's objtool rejects.
+- **armhf `multi_v7`** (k4/k6): `GCC_PLUGINS` off — the ARM ssp-per-task plugin's ABI ≠ the Bootlin cross gcc.
+- **powerpc64le**: `COMPAT` off (k4/k6) — its pure-64-bit LE toolchain can't build the 32-bit vdso.
+- **64-bit malta** (mips64el/eb): `-cpu MIPS64R2-generic` on k4/k6, but `-cpu 5KEc` on k3 (3.18's malta is
+  silent on the generic core); the default malta CPU is 32-bit → a 64-bit kernel never starts.
+- **k3 powerpc64**: force `-mabi=elfv1` — 3.18's Makefile picks `elfv2` via `cc-option` (the Bootlin
+  toolchain accepts it, unlike period BE-only ones) then adds the conflicting `-mcall-aixdesc`.
+- **versatile**: DT-only on k4/k6 → needs a `-dtb` (buildKernel gained a `dtbs` param → `$out/dtbs/`);
+  ATAG-based on k3 → needs none. powerpc/pmac32 needs the escc console built in on k2.6 + k3 (not k4/k6).
 
 **k2.6 (2.6.31, period gcc 4.4.7): 8 of the 9 kernel-capable arches boot** (banner
 `Linux version 2.6.31 (gcc version 4.4.7)`):
@@ -306,12 +320,11 @@ The sweep drove the **boot-image outputs** emitted by `kernel.nix`: ARM's ELF `v
 *virtual* address that qemu/bootloaders can't jump to before the MMU is on (MIPS boots vmlinux directly
 via KSEG0), so each arch also ships the image it actually boots (`zImage`/`bzImage`/`Image.gz`).
 
-Next: (a) extend the boot sweep to the modern bands (k3/k4/k6) — more arches boot there (arm64 `-M virt`,
-`powerpc64`/`powerpc64le` on `-M pseries`, armhf on vexpress/virt), so those bands should clear the k2.6
-gaps; (b) get `powerpc64` booting at 2.6.x — try a slightly later 2.6.3x kernel just for that cell (the
-OpenBIOS OF-claim path improved shortly after 2.6.31); (c) build against a *real* firmware kernel config
-(needs the rehosting `linux` branch + `linux_builder`); (d) a `buildModule` entrypoint to compile
-out-of-tree modules (e.g. igloo_driver) against a *prebuilt* `kernel-devel`; (e) mirror host + `base`.
+Next: (a) close the ppc64 boot gaps — `powerpc64` at k2.6/k3 and `powerpc64le` at k3 all *build* but don't
+boot on qemu's ppc64 firmware; worth a later 2.6.3x / a pseries machine-version sweep / a vdso32 drop for
+3.18-le; (b) build against a *real* firmware kernel config (needs the rehosting `linux` branch +
+`linux_builder`); (c) a `buildModule` entrypoint to compile out-of-tree modules (e.g. igloo_driver) against
+a *prebuilt* `kernel-devel`; (d) mirror host + `base`.
 
 ## Tarball mirror (reproducibility)
 
