@@ -16,6 +16,11 @@
   defconfig ? null, # an in-tree config make-target, e.g. "versatile_defconfig"
   archMakeVars ? { }, # ARCH= / CROSS_COMPILE handled below; extra make vars here
   buildModules ? true,
+  # Override the per-arch bootable image with `{ target; file; }` (make-target +
+  # path under the build tree). Needed for powerpc pseries, whose bootable form is
+  # a per-platform bootwrapper (`make zImage` → arch/powerpc/boot/zImage.pseries)
+  # that SLOF loads correctly, unlike the raw vmlinux ELF entry. null = arch default.
+  bootImageOverride ? null,
   # Caller-supplied Kconfig fragments applied AFTER the defconfig/.config is
   # materialized (scripts/config --enable/--disable, then re-resolved). Distinct
   # from the internal per-(era,arch) `kernelConfigDisable` below (which is about
@@ -90,7 +95,7 @@ let
   # boot image those arches actually boot. MIPS boots `vmlinux` directly (KSEG0
   # maps without the MMU) and powerpc's zImage needs a per-platform bootwrapper, so
   # both stay vmlinux-only here. `{ target; file; }`, or null to skip.
-  bootImage = {
+  bootImage = if bootImageOverride != null then bootImageOverride else {
     arm = { target = "zImage"; file = "arch/arm/boot/zImage"; };
     arm64 = { target = "Image.gz"; file = "arch/arm64/boot/Image.gz"; };
     x86_64 = { target = "bzImage"; file = "arch/x86/boot/bzImage"; };

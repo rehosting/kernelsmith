@@ -322,9 +322,17 @@ CPUs (970/970fx/POWER8), `pseries-2.x` machine versions, and console/spectre-cap
   (`Invalid write … region 'ppc_core99.bios'`) — a broken early-boot memory map.
 
 ppc64 boots cleanly from **k4 onward** (5.10/6.6 on `-M pseries`), so the wall is a pre-4.x vintage limit.
-The one untried lever is a proper `zImage.pseries` bootwrapper (vs the raw `vmlinux` SLOF loads today),
-which needs powerpc boot-image plumbing in `kernel.nix`. `k3-powerpc64le` additionally can't even build on
-3.18 (its vdso32 passes `-mlittle-endian`, unknown to the Bootlin ppc64le gcc) and has no BE/mac99 route.
+
+Researched against the docs (QEMU pseries manual, linuxppc wiki, Guenter Roeck's `linux-build-test`): the
+*approach* is confirmed correct — raw `vmlinux` on `-M pseries -cpu POWER8`, `pseries_defconfig`,
+`console=hvc0` is exactly how BE ppc64 is meant to boot. Our k3 image has the right ELF (`abiv1`, entry
+`0xc000…`, identical to the *booting* k4 image) and a consistently-elfv1 build, yet SLOF loads it and then
+executes an invalid opcode — so the residual is a subtle 3.18-vs-modern-SLOF/config issue, not the ELF ABI
+(that theory was tested and disproven). The `zImage.pseries` bootwrapper (now buildable via `kernel.nix`'s
+`bootImageOverride`) gets *further* — it starts and parses the command line — but its OF `claim` fails
+under `-M pseries,kernel-addr=0`. Closing this needs matching a known-good reference build/config (or a
+BE-elfv1-default toolchain); `k3-powerpc64le` also can't build on 3.18 (vdso32 `-mlittle-endian`) and has
+no BE/mac99 route. Tracked as an open item, not a blocker — every ppc64 arch boots on k4/k6.
 
 The sweep drove the **boot-image outputs** emitted by `kernel.nix`: ARM's ELF `vmlinux` entry is a
 *virtual* address that qemu/bootloaders can't jump to before the MMU is on (MIPS boots vmlinux directly
