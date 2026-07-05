@@ -171,6 +171,14 @@ stdenv.mkDerivation {
   nativeBuildInputs = [ ccShim toolchain ] ++ (with pkgs; [
     gnumake bc bison flex openssl.dev elfutils.dev perl cpio gawk
     rsync # modern kernels (>= 5.3) shell out to rsync in `headers_install`
+    # Config-driven host tools. Inert unless a .config selects them, so they cost
+    # nothing for minimal defconfigs but keep a rich firmware config from failing
+    # (or silently degrading) on a tool the boot sweep's lean configs never hit:
+    kmod #   `make modules_install` -> depmod; without it modules.dep/.alias/
+    #        .symbols are never generated (non-fatal warning, incomplete tree).
+    zstd lz4 lzop #  KERNEL_ZSTD/LZ4/LZO, RD_*, MODULE_COMPRESS_* (gzip/xz/bzip2
+    #        already come via stdenv). zstd is the default compressor on some arches.
+    pahole #  DEBUG_INFO_BTF (BPF): link-vmlinux.sh hard-errors without pahole.
   ]);
 
   patches = eraQuirks.patches;
