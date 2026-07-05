@@ -255,18 +255,17 @@ let
         configEnable = [ "SERIAL_PMACZILOG" "SERIAL_PMACZILOG_CONSOLE" ];
         qemuSystem = "qemu-system-ppc"; machine = "g3beige"; cmdline = "console=ttyS0";
       };
-      # BUILD-ONLY at k3: builds clean (see the elfv1 note) and modern SLOF loads
-      # the image, but the 3.18 pseries kernel doesn't come up on qemu's modern SLOF
-      # ("Booting from memory…" then silence — a vintage handoff mismatch, same class
-      # as k2.6 ppc64 but milder; era-contemporary pseries-2.x machines don't help).
-      # ppc64 boots fine on k4/k6. The elfv1 fix: 3.18's Makefile does
-      # `cc-option -mabi=elfv2` then unconditionally adds -mcall-aixdesc; the Bootlin
-      # toolchain ACCEPTS elfv2 (BE-only toolchains of the era didn't) so it picks
-      # elfv2 and conflicts with aixdesc — force elfv1 on C+asm (trailing flag wins).
+      # The k3 ppc64 gap, CLEARED. Earlier this was build-only: the Bootlin buildroot
+      # gcc defaults to ELFv2, so 3.18's BE Makefile (which emits -mcall-aixdesc and
+      # assumes an ELFv1-default compiler) either wouldn't build or, with a forced
+      # KCFLAGS=-mabi=elfv1, produced a mixed-ABI vmlinux SLOF trapped on. buildKernel
+      # now routes k3 powerpc64 to a dedicated ELFv1-default kernel gcc 6.5.0
+      # (matrix.k3PpcKernel; see kernel.nix), which builds clean and boots on
+      # `-M pseries -cpu POWER8` — the documented BE recipe, matched against a
+      # known-good Debian 3.16 reference. No ABI forcing.
       powerpc64 = {
-        defconfig = "pseries_defconfig"; buildOnly = true;
-        archMakeVars = { KCFLAGS = "-mabi=elfv1"; KAFLAGS = "-mabi=elfv1"; };
-        qemuSystem = "qemu-system-ppc64"; machine = "pseries"; mem = "1G";
+        defconfig = "pseries_defconfig";
+        qemuSystem = "qemu-system-ppc64"; machine = "pseries"; cpu = "POWER8"; mem = "1G";
         cmdline = "console=hvc0";
       };
       # NOTE: k3 powerpc64le is a documented gap. 3.18 always builds the 32-bit

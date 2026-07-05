@@ -29,7 +29,7 @@
       # Kernel-only (no-libc) period toolchains for the k2.6 kernel band. Keyed
       # "k2.6-<arch>" so buildKernel can prefer them over the musl era toolchain.
       mkKernelToolchain = import ./mk-kernel-toolchain.nix { inherit pkgs sources; };
-      kernelToolchains = lib.mapAttrs'
+      kernelToolchains = (lib.mapAttrs'
         (archName: ka: {
           name = "k2.6-${archName}";
           value = mkKernelToolchain ({
@@ -40,7 +40,17 @@
             inherit (matrix.k26Kernel) gccVer binutilsVer gmpVer mpfrVer;
           });
         })
-        matrix.k26KernelArches;
+        matrix.k26KernelArches)
+      # k3 ppc64: an ELFv1-default kernel gcc (see matrix.k3PpcKernel) — the
+      # vendored Bootlin k3 ppc64 toolchain is elfv2-default, which 3.18's BE
+      # Makefile can't use. buildKernel prefers this for k3/powerpc64.
+      // {
+        "k3-powerpc64" = mkKernelToolchain ({
+          name = "powerpc64-k3";
+          target = "powerpc64-linux";
+          inherit (matrix.k3PpcKernel) gccVer binutilsVer gmpVer mpcVer mpfrVer;
+        });
+      };
 
       # Primary sourcing path for k3/k4/k6: vendored Bootlin prebuilt toolchains.
       mkBootlinToolchain = import ./mk-bootlin-toolchain.nix { inherit pkgs; };

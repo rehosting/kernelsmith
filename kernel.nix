@@ -43,9 +43,19 @@ let
   inherit (pkgs) lib stdenv;
 
   eraName = resolve.eraFor version;
-  # Prefer a period-correct KERNEL-only toolchain (k2.6 band, no libc) where one
-  # exists for this arch; otherwise use the musl era toolchain. The fallback keeps
-  # every arch without a proven kernel toolchain exactly as it was (no regression).
+  # Prefer a period-correct KERNEL-only toolchain (no libc) where one exists for
+  # this (era,arch): the whole k2.6 band, plus k3-powerpc64. Otherwise use the
+  # vendored/musl era toolchain. The fallback keeps every arch without a dedicated
+  # kernel toolchain exactly as it was (no regression).
+  #
+  # k3-powerpc64 is the notable one: pre-4.x BE ppc64's Makefile emits
+  # -mcall-aixdesc and never passes an explicit -mabi, so it ASSUMES an
+  # ELFv1-default compiler. The vendored Bootlin buildroot gcc defaults to ELFv2
+  # -> `-mcall-aixdesc incompatible with -mabi=elfv2` at build (or, if forced to
+  # elfv1 via KCFLAGS, a mixed-ABI vmlinux SLOF traps on). kernelToolchains
+  # supplies an ELFv1-default gcc 6.5.0 for it (see matrix.k3PpcKernel), verified
+  # to boot on `-M pseries` against a known-good Debian 3.16 reference. (k4 /
+  # 5.10+ handle ELFv2-default BE explicitly in-tree, so they keep the Bootlin one.)
   kernelKey = "${eraName}-${arch}";
   toolchain = kernelToolchains.${kernelKey} or toolchains."${eraName}-${arch}" or (throw
     "buildKernel: no toolchain for era ${eraName} arch ${arch} (kernel ${version})");

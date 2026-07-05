@@ -64,6 +64,22 @@ rec {
   k26Kernel = {
     gccVer = "4.4.7"; binutilsVer = "2.27"; gmpVer = "4.3.2"; mpfrVer = "2.4.2";
   };
+
+  # ---- k3 KERNEL band, ppc64 only (period gcc 6.5.0, kernel-only, no libc) ----
+  # The k3 arches otherwise use vendored Bootlin toolchains, but Bootlin's
+  # buildroot powerpc64 gcc defaults to the ELFv2 ABI. 3.18's BE/pseries Makefile
+  # emits -mcall-aixdesc and never passes an explicit -mabi, so it ASSUMES an
+  # ELFv1-default compiler — with elfv2-default gcc it won't build (aixdesc/elfv2
+  # conflict), and forcing -mabi=elfv1 yields a mixed-ABI vmlinux SLOF traps on.
+  # A vanilla `powerpc64-linux` gcc defaults to ELFv1 (only powerpc64le defaults
+  # elfv2), so build a kernel-only gcc 6.5.0 (the k3 era compiler) as that triple.
+  # gcc 6.5 has asm-goto (unlike the k2.6 gcc 4.4.7, which can't assemble 3.18's
+  # jump-label/KVM real-mode asm), so 3.18 builds clean and boots on -M pseries.
+  # Support-lib versions match eras.k3 (mpc REQUIRED — gcc >=4.5 needs it).
+  k3PpcKernel = {
+    gccVer = "6.5.0"; binutilsVer = "2.27";
+    gmpVer = "6.1.2"; mpcVer = "1.1.0"; mpfrVer = "4.0.2";
+  };
   # Arches PROVEN to build a 2.6.31 kernel on this toolchain (README band sweep).
   # Plain -linux triples (no libc). armel is bare arm-linux-gnueabi (ARMv5 default,
   # boots the versatilepb ARMv5 board); armhf adds --with-arch=armv7-a so the

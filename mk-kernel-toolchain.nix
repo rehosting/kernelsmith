@@ -41,6 +41,8 @@
   binutilsVer,
   gmpVer,
   mpfrVer,
+  # gcc >= 4.5 requires MPC; gcc 4.4 predates it. null = omit (the 4.4 band).
+  mpcVer ? null,
   # gcc --with-arch (e.g. mips needs mips32r2); null to leave the gcc default.
   withArch ? null,
   # true for x86_64 (target CPU == build host): build a native gcc, not a cross.
@@ -59,7 +61,8 @@ stdenv.mkDerivation {
   pname = "cross-${name}-kernel-gcc${gccVer}";
   version = gccVer;
 
-  srcs = [ (src "binutils-${binutilsVer}") (src "gcc-${gccVer}") (src "gmp-${gmpVer}") (src "mpfr-${mpfrVer}") ];
+  srcs = [ (src "binutils-${binutilsVer}") (src "gcc-${gccVer}") (src "gmp-${gmpVer}") (src "mpfr-${mpfrVer}") ]
+    ++ lib.optional (mpcVer != null) (src "mpc-${mpcVer}");
   sourceRoot = ".";
 
   nativeBuildInputs = with pkgs; [ gnumake gcc bison flex texinfo gnused gawk which perl file ];
@@ -80,12 +83,15 @@ stdenv.mkDerivation {
     export PATH=$out/bin:$PATH
     # gcc <4.8 is written in gnu89 C; a modern host gcc's gnu11 inline semantics
     # turn system.h's `extern inline` floor_log2/exact_log2 into redefinition
-    # errors. Build gcc's own C in the dialect it was written for.
-    HOSTCC="gcc -std=gnu89 -fgnu89-inline"
+    # errors. Build gcc's own C in the dialect it was written for. gcc >=4.8 is
+    # written in C++ and builds fine with the plain host cc/c++ (a gnu89 CC would
+    # break its C++ front-end build), so only apply the dialect pin to the old band.
+    HOSTCC=${if lib.versionOlder gccVer "4.8" then "\"gcc -std=gnu89 -fgnu89-inline\"" else "gcc"}
 
-    # gmp/mpfr in-tree so gcc 4.4 builds them itself, fully offline.
+    # gmp/mpfr(/mpc) in-tree so gcc builds them itself, fully offline.
     mv gmp-${gmpVer} gcc-${gccVer}/gmp
     mv mpfr-${mpfrVer} gcc-${gccVer}/mpfr
+    ${lib.optionalString (mpcVer != null) "mv mpc-${mpcVer} gcc-${gccVer}/mpc"}
     # Refresh pre-musl config.sub/.guess for host-triple robustness on a modern
     # build machine (harmless for the plain -linux target triples we use here).
     for f in config.sub config.guess; do

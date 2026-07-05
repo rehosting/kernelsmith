@@ -101,7 +101,7 @@ the ABI. **Result: 32/42.**
 |---|---|---|
 | k6 (6.6) | **11/11** | — |
 | k4 (5.10) | 10/11 | x86_64: `objtool` under `tools/` has its own `-Werror` (gcc-13 use-after-free), unreachable by `HOSTCFLAGS` |
-| k3 (3.18) | 9/11 | powerpc64: ELFv1/ELFv2 ABI (musl is elfv2, BE kernel is `-mcall-aixdesc`/elfv1); powerpc64le: vdso32 sub-build invokes host gcc |
+| k3 (3.18) | **10/11** | powerpc64le: vdso32 sub-build invokes host gcc. powerpc64 was the ELFv1/ELFv2 ABI clash (Bootlin gcc is elfv2-default, BE kernel wants `-mcall-aixdesc`/elfv1) — **fixed** with a dedicated elfv1-default kernel gcc (`matrix.k3PpcKernel`); it now builds *and* boots |
 | k2.6 (2.6.31) | 2/9 → **3/9** | see the TRUE gcc-4.x section below — moving k2.6 to gcc 4.9.4 removed the hard errors and recovered powerpc |
 
 Two `kernel.nix` `eraQuirks` fixes landed (recovered the 3 k3 `dtc` cells, no regressions):
@@ -260,12 +260,12 @@ reached the root-fs stage (no rootfs supplied → a `VFS: Unable to mount root f
 marker). A cell's derivation only succeeds if its kernel boots. Per band: `nix build -f boot.nix k4`;
 one cell: `tests.k4-powerpc64`; interactive: `nix run -f boot.nix runners.k4-arm64`.
 
-**`nix build -f boot.nix all` boots 39 cells across four eras** (2.6.31 → 6.6):
+**`nix build -f boot.nix all` boots 40 cells across four eras** (2.6.31 → 6.6):
 
 | band (kernel / gcc) | booting | not booting (still built) |
 |---|---|---|
-| **k2.6** (2.6.31 / 4.4.7) | 8 | `powerpc64` — qemu ppc64 firmware wall |
-| **k3** (3.18.140 / 6.5) | 9 | `powerpc64` (3.18-on-modern-SLOF vintage), `powerpc64le` (3.18 vdso32 `-mlittle-endian` toolchain) |
+| **k2.6** (2.6.31 / 4.4.7) | 8 | `powerpc64` — 2.6.31 can't hand off to modern SLOF |
+| **k3** (3.18.140 / 6.5) | 10 | `powerpc64le` (3.18 vdso32 `-mlittle-endian` toolchain) |
 | **k4** (5.10.229 / 9.x) | 11 | — |
 | **k6** (6.6 / 13.x) | 11 | — |
 
@@ -278,8 +278,11 @@ era×toolchain constraint now encoded in the table:
 - **powerpc64le**: `COMPAT` off (k4/k6) — its pure-64-bit LE toolchain can't build the 32-bit vdso.
 - **64-bit malta** (mips64el/eb): `-cpu MIPS64R2-generic` on k4/k6, but `-cpu 5KEc` on k3 (3.18's malta is
   silent on the generic core); the default malta CPU is 32-bit → a 64-bit kernel never starts.
-- **k3 powerpc64**: force `-mabi=elfv1` — 3.18's Makefile picks `elfv2` via `cc-option` (the Bootlin
-  toolchain accepts it, unlike period BE-only ones) then adds the conflicting `-mcall-aixdesc`.
+- **k3 powerpc64**: an **ELFv1-default kernel gcc**, not ABI-forcing. 3.18's BE Makefile emits
+  `-mcall-aixdesc` and assumes an elfv1-default compiler; the Bootlin buildroot gcc defaults to elfv2
+  (`-mcall-aixdesc incompatible with -mabi=elfv2`), and a forced `-mabi=elfv1` produces a mixed-ABI vmlinux
+  SLOF traps on. `buildKernel` routes k3/powerpc64 to a kernel-only gcc 6.5.0 built as `powerpc64-linux`
+  (elfv1-default, asm-goto-capable) — see `matrix.k3PpcKernel`. Boots on `-M pseries -cpu POWER8`.
 - **versatile**: DT-only on k4/k6 → needs a `-dtb` (buildKernel gained a `dtbs` param → `$out/dtbs/`);
   ATAG-based on k3 → needs none. powerpc/pmac32 needs the escc console built in on k2.6 + k3 (not k4/k6).
 
@@ -309,37 +312,34 @@ without disabling the default leaves the old `-EL`/32-bit image; (2) 2.6.31 Powe
 rejects the ARMv7 `isb`/`dsb` in `cache-v7.S`) **and** a PBA8-only config (`realview_defconfig` is
 multi-board; the v6 boards keep `CPU_V6` on and `arch/arm/Makefile` lets the v6 `-march` override v7).
 
-**The ppc64 gaps (`powerpc64` at k2.6/k3, `powerpc64le` at k3) are a qemu-firmware wall for pre-4.x ppc64,
-not a board/toolchain gap** — the kernels *build* (exposed build-only as `kernels.k26-powerpc64` /
-`kernels.k3-powerpc64`) and their codegen is cross-validated by the booting `powerpc` (ppc32) cells.
-Investigated thoroughly across both qemu ppc64 firmwares, three kernel versions (2.6.31, 3.18, 2.6.39),
-CPUs (970/970fx/POWER8), `pseries-2.x` machine versions, and console/spectre-cap variants:
+**The k3 ppc64 gap was a toolchain bug, not a qemu-firmware wall — now closed.** Earlier this looked like a
+pre-4.x pseries firmware limit. A reference-kernel isolation test disproved that: a known-good Debian jessie
+`vmlinux-3.16.0-4-powerpc64` (BE, ELF V1, built by gcc 4.8.4) **boots cleanly on our exact pinned qemu 8.2.7**
+with the documented recipe (`-M pseries -cpu POWER8`, `console=hvc0`, raw vmlinux) — SLOF loads it,
+`prom_init` runs, reaches the root-fs stage. So qemu/SLOF is fine; the fault was on our build side. The A/B:
+our own `pseries_defconfig` (a) wouldn't compile naturally (`-mcall-aixdesc incompatible with -mabi=elfv2`),
+and (b) with a forced `KCFLAGS=-mabi=elfv1` compiled but SLOF-loaded-then-invalid-opcoded. Root cause:
+`powerpc64-buildroot-linux-musl-gcc -Q --help=target` shows **`-mabi=elfv2` enabled by default** — but 3.18's
+BE Makefile emits `-mcall-aixdesc` and assumes an *elfv1-default* compiler. Fix: a kernel-only gcc 6.5.0 built
+as `powerpc64-linux` (elfv1-default, asm-goto-capable — the ancient k2.6 gcc 4.4.7 can't assemble 3.18's
+jump-label/KVM real-mode asm). Now `k3-powerpc64` boots full-config on `-M pseries -cpu POWER8`. ppc64 boots
+on **k3, k4, and k6**.
 
-- **`-M pseries` (SLOF):** 2.6.31 can't hand off; 3.18 loads but jumps into zeroed memory
-  (`invalid/unsupported opcode 00000000` early) — an elfv1-entry-vs-modern-SLOF mismatch.
-- **`-M mac99 -cpu 970` (OpenBIOS):** 2.6.31 fails the device-tree `claim`
-  (`No memory for flatten_device_tree`); 3.18 gets *past* handoff but scribbles into the BIOS ROM region
-  (`Invalid write … region 'ppc_core99.bios'`) — a broken early-boot memory map.
-
-ppc64 boots cleanly from **k4 onward** (5.10/6.6 on `-M pseries`), so the wall is a pre-4.x vintage limit.
-
-Researched against the docs (QEMU pseries manual, linuxppc wiki, Guenter Roeck's `linux-build-test`): the
-*approach* is confirmed correct — raw `vmlinux` on `-M pseries -cpu POWER8`, `pseries_defconfig`,
-`console=hvc0` is exactly how BE ppc64 is meant to boot. Our k3 image has the right ELF (`abiv1`, entry
-`0xc000…`, identical to the *booting* k4 image) and a consistently-elfv1 build, yet SLOF loads it and then
-executes an invalid opcode — so the residual is a subtle 3.18-vs-modern-SLOF/config issue, not the ELF ABI
-(that theory was tested and disproven). The `zImage.pseries` bootwrapper (now buildable via `kernel.nix`'s
-`bootImageOverride`) gets *further* — it starts and parses the command line — but its OF `claim` fails
-under `-M pseries,kernel-addr=0`. Closing this needs matching a known-good reference build/config (or a
-BE-elfv1-default toolchain); `k3-powerpc64le` also can't build on 3.18 (vdso32 `-mlittle-endian`) and has
-no BE/mac99 route. Tracked as an open item, not a blocker — every ppc64 arch boots on k4/k6.
+Two ppc64 items remain, both narrow:
+- **`k2.6-powerpc64`** (build-only, `kernels.k26-powerpc64`): 2.6.31 predates modern SLOF/PAPR expectations —
+  it can't hand off on `-M pseries` (and `-M mac99`/OpenBIOS fails the device-tree `claim`). A genuine
+  2.6.31-vintage limit, distinct from the (now-solved) k3 ABI issue; its codegen is cross-validated by the
+  booting `powerpc` (ppc32) cell.
+- **`k3-powerpc64le`**: 3.18 always builds the 32-bit vdso32, whose Makefile passes `-mlittle-endian` (the
+  Bootlin ppc64le gcc wants `-mlittle`), and 3.18 has no COMPAT/VDSO32 knob to drop it — a 3.18-era toolchain
+  mismatch. Boots fine on k4/k6.
 
 The sweep drove the **boot-image outputs** emitted by `kernel.nix`: ARM's ELF `vmlinux` entry is a
 *virtual* address that qemu/bootloaders can't jump to before the MMU is on (MIPS boots vmlinux directly
 via KSEG0), so each arch also ships the image it actually boots (`zImage`/`bzImage`/`Image.gz`).
 
-Next: (a) the ppc64 gaps (above) are a confirmed pre-4.x qemu-firmware wall; the only remaining lever is a
-`zImage.pseries` bootwrapper (needs powerpc boot-image plumbing in `kernel.nix`) — low-confidence, deferred;
+Next: (a) the two remaining ppc64 items (above) are narrow — `k2.6-powerpc64` is a real 2.6.31-vintage SLOF
+handoff limit; `k3-powerpc64le` is a 3.18 vdso32 toolchain mismatch. Both boot on k4/k6; low priority;
 (b) build against a *real* firmware kernel config (needs the rehosting `linux` branch + `linux_builder`);
 (c) a `buildModule` entrypoint to compile out-of-tree modules (e.g. igloo_driver) against a *prebuilt*
 `kernel-devel`; (d) mirror host + `base`.
