@@ -309,22 +309,32 @@ without disabling the default leaves the old `-EL`/32-bit image; (2) 2.6.31 Powe
 rejects the ARMv7 `isb`/`dsb` in `cache-v7.S`) **and** a PBA8-only config (`realview_defconfig` is
 multi-board; the v6 boards keep `CPU_V6` on and `arch/arm/Makefile` lets the v6 `-march` override v7).
 
-**`powerpc64` is the one exception — a firmware wall, not a board or toolchain gap.** Exposed as a
-build-only kernel (`kernels.k26-powerpc64`, the PowerMac G5 / 970 `g5_defconfig`): it compiles clean and
-its `prom_init` runs, but no qemu ppc64 firmware boots a 2.6.31 ppc64 kernel — `-M mac99 -cpu 970`'s
-OpenBIOS can't satisfy the kernel's device-tree `claim` (`No memory for flatten_device_tree`), and
-`-M pseries`'s SLOF/PAPR platform postdates 2.6.31. Its codegen is cross-validated by `powerpc` (ppc32,
-same gcc 4.4.7), which boots.
+**The ppc64 gaps (`powerpc64` at k2.6/k3, `powerpc64le` at k3) are a qemu-firmware wall for pre-4.x ppc64,
+not a board/toolchain gap** — the kernels *build* (exposed build-only as `kernels.k26-powerpc64` /
+`kernels.k3-powerpc64`) and their codegen is cross-validated by the booting `powerpc` (ppc32) cells.
+Investigated thoroughly across both qemu ppc64 firmwares, three kernel versions (2.6.31, 3.18, 2.6.39),
+CPUs (970/970fx/POWER8), `pseries-2.x` machine versions, and console/spectre-cap variants:
+
+- **`-M pseries` (SLOF):** 2.6.31 can't hand off; 3.18 loads but jumps into zeroed memory
+  (`invalid/unsupported opcode 00000000` early) — an elfv1-entry-vs-modern-SLOF mismatch.
+- **`-M mac99 -cpu 970` (OpenBIOS):** 2.6.31 fails the device-tree `claim`
+  (`No memory for flatten_device_tree`); 3.18 gets *past* handoff but scribbles into the BIOS ROM region
+  (`Invalid write … region 'ppc_core99.bios'`) — a broken early-boot memory map.
+
+ppc64 boots cleanly from **k4 onward** (5.10/6.6 on `-M pseries`), so the wall is a pre-4.x vintage limit.
+The one untried lever is a proper `zImage.pseries` bootwrapper (vs the raw `vmlinux` SLOF loads today),
+which needs powerpc boot-image plumbing in `kernel.nix`. `k3-powerpc64le` additionally can't even build on
+3.18 (its vdso32 passes `-mlittle-endian`, unknown to the Bootlin ppc64le gcc) and has no BE/mac99 route.
 
 The sweep drove the **boot-image outputs** emitted by `kernel.nix`: ARM's ELF `vmlinux` entry is a
 *virtual* address that qemu/bootloaders can't jump to before the MMU is on (MIPS boots vmlinux directly
 via KSEG0), so each arch also ships the image it actually boots (`zImage`/`bzImage`/`Image.gz`).
 
-Next: (a) close the ppc64 boot gaps — `powerpc64` at k2.6/k3 and `powerpc64le` at k3 all *build* but don't
-boot on qemu's ppc64 firmware; worth a later 2.6.3x / a pseries machine-version sweep / a vdso32 drop for
-3.18-le; (b) build against a *real* firmware kernel config (needs the rehosting `linux` branch +
-`linux_builder`); (c) a `buildModule` entrypoint to compile out-of-tree modules (e.g. igloo_driver) against
-a *prebuilt* `kernel-devel`; (d) mirror host + `base`.
+Next: (a) the ppc64 gaps (above) are a confirmed pre-4.x qemu-firmware wall; the only remaining lever is a
+`zImage.pseries` bootwrapper (needs powerpc boot-image plumbing in `kernel.nix`) — low-confidence, deferred;
+(b) build against a *real* firmware kernel config (needs the rehosting `linux` branch + `linux_builder`);
+(c) a `buildModule` entrypoint to compile out-of-tree modules (e.g. igloo_driver) against a *prebuilt*
+`kernel-devel`; (d) mirror host + `base`.
 
 ## Tarball mirror (reproducibility)
 
