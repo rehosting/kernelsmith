@@ -344,6 +344,52 @@ handoff limit; `k3-powerpc64le` is a 3.18 vdso32 toolchain mismatch. Both boot o
 (c) a `buildModule` entrypoint to compile out-of-tree modules (e.g. igloo_driver) against a *prebuilt*
 `kernel-devel`; (d) mirror host + `base`.
 
+## Building arbitrary configs — the config-space envelope
+
+The boot sweep proves specific board defconfigs; this proves `buildKernel` handles *any*
+`.config`, not just curated ones. `buildKernel` gained the machinery a real vendor/firmware
+config needs, all general (not tuned to one config):
+
+- **Full `.config` + validation** — supply a complete config via `config`; it's normalized
+  (`oldconfig`/`olddefconfig`) with cross-version safety nets, since kbuild itself warns that
+  normalizing an old config against a different tree "won't necessarily produce a working kernel"
+  (new *and renamed* symbols). Every supplied config gets `make listnewconfig` (missing new-in-tree
+  symbols), `KCONFIG_WARN_UNKNOWN_SYMBOLS` (stale/renamed/dropped), and a before/after `.config` diff
+  logged; `configStrict = true` fails the build on symbols unknown to the tree.
+- **Hermetic/reproducible** — `KBUILD_BUILD_{USER,HOST,VERSION}` fixed + `KBUILD_BUILD_TIMESTAMP` from
+  `SOURCE_DATE_EPOCH`, so `/proc/version` and embedded strings are deterministic.
+- **`capabilityDisable`** (default `[ "GCC_PLUGINS" "SAMPLES" ]`) — options a cross/musl *kernel*-build
+  toolchain fundamentally can't satisfy are auto-dropped *if a config enables them*, each logged, so a
+  maximal config degrades gracefully instead of dying. Neither is the kernel proper: `GCC_PLUGINS` are
+  host `.so`s loaded by the cross `cc1` (prebuilt cross gcc ≠ host g++ → plugin ABI init failure);
+  `SAMPLES` builds userspace demos that assume glibc headers musl lacks. Caller-overridable.
+- **Config-driven host tools** in the build env: `pahole` (BTF), `zstd`/`lz4`/`lzop` (kernel/module/
+  initramfs compression), `kmod` (depmod → module deps), `hexdump` (arm64 EFI zboot), `mkimage`
+  (MIPS FIT images) — inert unless a config selects them.
+
+**`allmodconfig` sweep** (the canonical "can this toolchain build everything" stress — every
+driver/subsystem the arch supports, as modules), across the arch × era matrix:
+
+| era (kernel / gcc) | allmodconfig builds | notes |
+|---|---|---|
+| **k6** (6.6 / 13.x)     | 11/12 | all but `powerpc64le` |
+| **k4** (5.10 / 9.x)     | 11/12 | all but `powerpc64le` (modules install `.ko.gz`) |
+| **k3** (3.18 / 6.5)     | 10/12 | `powerpc64le` + `x86_64` (a 3.18-era `Documentation/vDSO` + `headers_check` quirk) |
+| **k2.6** (2.6.31 / 4.4) | n/a   | `allmodconfig` isn't meaningful here — building 2.6.31's *entire* driver surface hits era bugs (e.g. `advansys.c` `dma_cache_sync` on ARM, Xen `.size` asm). Real 2.6.31 configs are small; the boot sweep proves 8/9 arches **boot**. |
+
+Each gap resolved to one of three clean categories: **a host tool to add** (`hexdump`, `mkimage`), **a
+capability to disable** (`GCC_PLUGINS`, `SAMPLES`), or an **inherent toolchain/width limit**. The last:
+
+- **`allmodconfig` is per-kernel-ARCH and width/endian-agnostic** — for `ARCH=powerpc` it maximizes to
+  `PPC64=y` (64-bit). It maps cleanly only to the arch *key* whose (width, endianness) matches that
+  choice: the 64-bit `powerpc64` key passes; the 32-bit `powerpc`/`powerpcle` keys need `PPC64=n` to
+  test a *32-bit* max config (they build fine then — the 32-bit toolchain isn't the problem, and real
+  32-bit ppc configs build + boot).
+- **`powerpc64le`** is the one persistent hole: the pure-64-bit-LE Bootlin toolchain has **no 32-bit
+  multilib**, so `COMPAT`/`vdso32` and the powerpc boot wrapper (`arch/powerpc/boot/crt0.o`) can't build.
+  A real toolchain limitation, not a kernelsmith defect — and rehosting uses ppc64le `vmlinux` directly
+  on pseries (no zImage, no 32-bit compat), so it doesn't block the real use case.
+
 ## Tarball mirror (reproducibility)
 
 Every pinned tarball (mcm components in `sources.nix`, Bootlin SDKs in `bootlin-sources.nix`)
