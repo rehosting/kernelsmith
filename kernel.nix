@@ -37,6 +37,16 @@
   # symbols unknown to this tree (the genuine red flag — renamed/dropped, not the
   # expected new-symbol gaps). Gate it per-target like nixpkgs' ignoreConfigErrors.
   configStrict ? false,
+  # Kconfig symbols a cross / musl KERNEL-build toolchain fundamentally can't
+  # satisfy — auto-disabled (with a logged notice) IF the materialized config
+  # enables them, so "build any config" (e.g. allmodconfig) degrades gracefully
+  # instead of dying. Neither is the kernel proper: GCC_PLUGINS are host .so's
+  # loaded by the cross `cc1`, and a prebuilt cross gcc vs the host g++ are
+  # different builds → the plugin fails to initialize; SAMPLES builds userspace
+  # demo programs against the target libc, several of which assume glibc headers
+  # (bits/wordsize.h, fsid_t.val) that musl doesn't provide. Clear/extend per
+  # caller (e.g. `[]` on a glibc/host-matched toolchain that can do plugins).
+  capabilityDisable ? [ "GCC_PLUGINS" "SAMPLES" ],
   # Device-tree blob basenames to install to $out/dtbs/<name> (e.g.
   # "versatile-pb.dtb"). When non-empty we run the `dtbs` make target (builds the
   # scripts/dtc host tool + every board DTB, version-agnostic — 6.5+ moved ARM DTS
@@ -189,6 +199,23 @@ let
     ( set +o pipefail; yes "" | make $makeFlags ${hostFlagArg} oldconfig )
   '';
 
+  # Capability guard: after the config is fully materialized, drop any symbol the
+  # cross/musl kernel-build toolchain can't satisfy IF (and only if) it's enabled,
+  # logging each. Runs last so it overrides defconfig + caller configEnable. This
+  # is what lets `defconfig = "allmodconfig"` build — it enables GCC_PLUGINS and
+  # SAMPLES, neither buildable here — without a config-specific carve-out.
+  capabilityDisableCmd = lib.optionalString (capabilityDisable != [ ]) ''
+    ks_dirty=
+    for sym in ${lib.concatStringsSep " " capabilityDisable}; do
+      if grep -q "^CONFIG_$sym=y" .config; then
+        echo "kernelsmith: auto-disabling CONFIG_$sym — unsupported by the cross/musl kernel-build toolchain (capabilityDisable)" >&2
+        ./scripts/config --disable "$sym"
+        ks_dirty=1
+      fi
+    done
+    if [ -n "$ks_dirty" ]; then ( set +o pipefail; yes "" | make $makeFlags ${hostFlagArg} oldconfig ); fi
+  '';
+
   # gcc major of the resolved toolchain, for the k2.6 header-dispatch shim.
   gccMajor = lib.versions.major toolchain.gccVer;
 
@@ -270,6 +297,7 @@ stdenv.mkDerivation {
     export KCONFIG_WARN_UNKNOWN_SYMBOLS=1
     ${configCmd}
     ${configTuneCmd}
+    ${capabilityDisableCmd}
     ${lib.optionalString (config != null) ''
       echo "=== kernelsmith config check: .config changes after normalization (< supplied / > tree) ==="
       { diff .config.ks-orig .config || true; } | grep -E '^[<>].*CONFIG' | head -n 300 || echo "(no CONFIG-line changes)"
