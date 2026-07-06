@@ -237,6 +237,8 @@ stdenv.mkDerivation {
     zstd lz4 lzop #  KERNEL_ZSTD/LZ4/LZO, RD_*, MODULE_COMPRESS_* (gzip/xz/bzip2
     #        already come via stdenv). zstd is the default compressor on some arches.
     pahole #  DEBUG_INFO_BTF (BPF): link-vmlinux.sh hard-errors without pahole.
+    util-linux #  `hexdump`, used by arm64's EFI zboot stub (libstub/Makefile.zboot
+    #        -> vmlinuz.efi) and various other arch boot-image steps.
   ]);
 
   patches = eraQuirks.patches;
