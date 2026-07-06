@@ -241,6 +241,12 @@ stdenv.mkDerivation {
     #        -> vmlinuz.efi) and various other arch boot-image steps.
     ubootTools #  `mkimage`, used by MIPS (and others) to package the FIT/uImage
     #        boot image (arch/mips/boot -> vmlinux.gz.itb) when a config selects it.
+    openssl.bin #  the `openssl` executable (openssl.dev above is headers/lib only).
+    #        MODULE_SIG=y / SYSTEM_TRUSTED_KEYS with the default key path make
+    #        certs/Makefile run `openssl req` to generate signing_key.pem at build.
+    pkg-config #  how the kernel's scripts/Makefile locates libcrypto/libelf for
+    #        sign-file/extract-cert/objtool; absent, some versions silently drop
+    #        MODULE_SIG instead of failing loudly.
   ]);
 
   patches = eraQuirks.patches;
