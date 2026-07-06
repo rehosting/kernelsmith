@@ -28,6 +28,15 @@
   # big-endian malta kernel is malta_defconfig + configEnable ["CPU_BIG_ENDIAN"].
   configEnable ? [ ],
   configDisable ? [ ],
+  # Strictness for the supplied-`config` path. Feeding a vendor/firmware .config
+  # into a tree it wasn't written for is hazardous — new kernels add AND rename
+  # symbols, so normalization silently drops the unknowns (kbuild docs: oldconfig
+  # on an old .config "won't necessarily produce a working kernel"). We always LOG
+  # the drift (listnewconfig + KCONFIG_WARN_UNKNOWN_SYMBOLS + a before/after diff);
+  # `configStrict = true` additionally FAILS the build if the .config referenced
+  # symbols unknown to this tree (the genuine red flag — renamed/dropped, not the
+  # expected new-symbol gaps). Gate it per-target like nixpkgs' ignoreConfigErrors.
+  configStrict ? false,
   # Device-tree blob basenames to install to $out/dtbs/<name> (e.g.
   # "versatile-pb.dtb"). When non-empty we run the `dtbs` make target (builds the
   # scripts/dtc host tool + every board DTB, version-agnostic — 6.5+ moved ARM DTS
@@ -128,10 +137,32 @@ let
   # (works on every era). A supplied .config needs normalizing against the tree:
   # `olddefconfig` only exists from ~2.6.36, so fall back to piped `oldconfig`
   # on the k2.6 band.
-  configCmd =
+  normalizeCmd =
     if defconfig != null then "make $makeFlags ${hostFlagArg} ${defconfig}"
     else if eraName == "k2.6" then ''yes "" | make $makeFlags ${hostFlagArg} oldconfig''
     else "make $makeFlags ${hostFlagArg} olddefconfig";
+
+  # A defconfig target is tree-native, so it just runs. A supplied full `.config`
+  # (postPatch already copied it to .config) gets wrapped with cross-version
+  # visibility: snapshot it, list the new-in-tree symbols it lacks (listnewconfig),
+  # then normalize while capturing kconfig's unknown-symbol warnings to a file for
+  # logging and the optional strict gate. The before/after diff runs later in
+  # buildPhase (after configTuneCmd, so it reflects configEnable/Disable too).
+  configCmd =
+    if config == null then normalizeCmd
+    else ''
+      cp .config .config.ks-orig
+      echo "=== kernelsmith config check: symbols new in ${version} that this .config lacks ==="
+      make $makeFlags ${hostFlagArg} listnewconfig 2>/dev/null || echo "(listnewconfig unavailable on this tree)"
+      ${normalizeCmd} 2> .config.ks-warn || { cat .config.ks-warn >&2; exit 1; }
+      cat .config.ks-warn >&2   # surface unknown/renamed-symbol warnings to the build log
+      ${lib.optionalString configStrict ''
+        if grep -qi "unknown symbol" .config.ks-warn; then
+          echo "kernelsmith: configStrict — supplied .config references symbols unknown to ${version} (renamed/dropped); see warnings above" >&2
+          exit 1
+        fi
+      ''}
+    '';
 
   # Per-(era,arch) Kconfig symbols to force-disable after materializing the
   # config. Rare, surgical: for cells where an *optional* kernel feature emits
@@ -226,8 +257,23 @@ stdenv.mkDerivation {
 
   buildPhase = ''
     runHook preBuild
+    # Reproducible build metadata (research: nixpkgs build.nix + tuxmake). Fixed
+    # identity + a timestamp derived from SOURCE_DATE_EPOCH (stdenv pins it) so
+    # /proc/version and other embedded strings are deterministic across rebuilds.
+    export KBUILD_BUILD_USER=kernelsmith
+    export KBUILD_BUILD_HOST=kernelsmith
+    export KBUILD_BUILD_VERSION=1-kernelsmith
+    export KBUILD_BUILD_TIMESTAMP="$(date -u -d @''${SOURCE_DATE_EPOCH:-315532800})"
+    # Make kconfig warn (not silently drop) on symbols the supplied .config sets
+    # that this tree doesn't define — renamed/dropped across versions. Ignored by
+    # pre-5.x kconfig, so harmless on the old bands.
+    export KCONFIG_WARN_UNKNOWN_SYMBOLS=1
     ${configCmd}
     ${configTuneCmd}
+    ${lib.optionalString (config != null) ''
+      echo "=== kernelsmith config check: .config changes after normalization (< supplied / > tree) ==="
+      { diff .config.ks-orig .config || true; } | grep -E '^[<>].*CONFIG' | head -n 300 || echo "(no CONFIG-line changes)"
+    ''}
     make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES
     ${lib.optionalString (bootImage != null)
       "make $makeFlags ${hostFlagArg} -j$NIX_BUILD_CORES ${bootImage.target}"}
