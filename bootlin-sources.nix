@@ -19,6 +19,9 @@
 #   - powerpcle : no 32-bit powerpc little-endian variant exists.
 #   - mips64el  : only n32 ABI (mips64el-n32), not the n64 our target wants.
 #   - mips64eb  : `mips64` has musl only at 2017.05 (gcc 5.4); newer releases dropped it.
+# Arches Bootlin does not ship AT ALL (no dir, any libc, any release):
+#   - loongarch64 : and musl-cross-make can't cover it either (musl gained loongarch64
+#                   in 1.2.5; every era pins <= 1.2.4). Needs a third sourcing path.
 { pkgs }:
 let
   inherit (pkgs) fetchurl lib;
@@ -35,6 +38,7 @@ let
     powerpc     = { dir = "powerpc-e300c3";       target = "powerpc-buildroot-linux-musl";     alias = "powerpc-linux-"; };
     powerpc64   = { dir = "powerpc64-power8";     target = "powerpc64-buildroot-linux-musl";   alias = "powerpc64-linux-"; };
     powerpc64le = { dir = "powerpc64le-power8";   target = "powerpc64le-buildroot-linux-musl"; alias = "powerpc64le-linux-"; };
+    riscv64     = { dir = "riscv64-lp64d";        target = "riscv64-buildroot-linux-musl";     alias = "riscv64-linux-"; };
     x86_64      = { dir = "x86-64";               target = "x86_64-buildroot-linux-musl";      alias = "x86_64-linux-"; };
   };
 
@@ -69,6 +73,10 @@ builtins.listToAttrs [
   (t "powerpc"     "k6" "2024.05-1" "sha256-YPtrgo5YtVSFFP1lxQRX0ZB5EZHTp9zsH7938AKLwkA=")
   (t "powerpc64"   "k6" "2024.05-1" "sha256-1fko7ZndT32uXEs9R8D0Y6mQt3RIZtibqC4Ip+6fmoo=")
   (t "powerpc64le" "k6" "2024.05-1" "sha256-YvBWtZk/bRvy2Uph0B4dSqpYkGEH2zrxGsiCyYntfB0=")
+  # riscv64 is k6-ONLY on purpose: Bootlin publishes no riscv64 musl toolchain
+  # before 2024.05 (2018.02 / 2020.08 / 2021.11 all 404), and no earlier band
+  # needs one — upstream Linux riscv support starts at 4.15.
+  (t "riscv64"     "k6" "2024.05-1" "sha256-SByTU0Z/QtAu35CAlUs8FKdf98Ge2ej7+c+mfQKFh9M=")
   (t "x86_64"      "k6" "2024.05-1" "sha256-889BfSjn35W9q2Mv+DfeZqwDFFvQ4d14zImq36bjFSY=")
 
   # ---- k4: gcc 9.3.0 (2020.08-1); x86_64 has no musl that old -> 2021.11-5 (gcc 10.3) ----
