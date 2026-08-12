@@ -50,6 +50,15 @@
           target = "powerpc64-linux";
           inherit (matrix.k3PpcKernel) gccVer binutilsVer gmpVer mpcVer mpfrVer;
         });
+        # k6 loongarch64: the only arch with no libc-toolchain source at all
+        # (see matrix.k6LoongarchKernel). Kernel-only is not a compromise here —
+        # the kernel needs no target libc — but it does mean loongarch64 has no
+        # USERLAND toolchain from kernelsmith, unlike every other arch.
+        "k6-loongarch64" = mkKernelToolchain ({
+          name = "loongarch64-k6";
+          target = "loongarch64-linux";
+          inherit (matrix.k6LoongarchKernel) gccVer binutilsVer gmpVer mpcVer mpfrVer;
+        });
       };
 
       # Primary sourcing path for k3/k4/k6: vendored Bootlin prebuilt toolchains.
