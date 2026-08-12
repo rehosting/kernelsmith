@@ -109,6 +109,24 @@ rec {
     x86_64 = { target = "x86_64-linux"; native = true; };
   };
 
+  # ---- k6 KERNEL band, loongarch64 only (gcc 13.3.0, kernel-only, no libc) ----
+  # loongarch64 has NO libc-toolchain source available to us: Bootlin ships no
+  # loongarch64 dir at any libc or release, and musl-cross-make can't target it
+  # (musl gained loongarch64 in 1.2.5; every era here pins <= 1.2.4). So take the
+  # route the kernel-only shape already exists for — the kernel is built
+  # -nostdinc -ffreestanding and links no target libc, so no musl port is needed
+  # to compile one. gcc 13.3 / binutils 2.44 are the k6 era's own versions (both
+  # already pinned in sources.nix) and both have loongarch support well in hand
+  # (gcc since 12, binutils since 2.38). Upstream Linux loongarch starts at 6.1,
+  # so k6 is the only band this can apply to.
+  #
+  # This replaces the rehosting Docker image's hand-installed glibc cross at
+  # /opt/cross/loongarch64-linux-gcc-cross — an unpinned, unrecorded toolchain.
+  k6LoongarchKernel = {
+    gccVer = "13.3.0"; binutilsVer = "2.44";
+    gmpVer = "6.3.0"; mpcVer = "1.3.1"; mpfrVer = "4.2.2";
+  };
+
   # The 13 architectures, as mcm target triples + per-arch config.mak quirks.
   arches = {
     armel        = { target = "arm-linux-musleabi"; };
