@@ -2,7 +2,7 @@
 #
 # This is the whole point of Tier 2: adding a kernel era or an arch is an edit
 # here, not a new Dockerfile stage. `eras` defines the component-version bundles
-# that a given kernel generation can be built with; `arches` defines the 12 mcm
+# that a given kernel generation can be built with; `arches` defines the 13 mcm
 # target triples + per-arch quirks. The flake builds the cartesian product
 # (skipping any (era, arch) pair listed in `unsupported`).
 { lib }:
@@ -109,7 +109,7 @@ rec {
     x86_64 = { target = "x86_64-linux"; native = true; };
   };
 
-  # The 12 architectures, as mcm target triples + per-arch config.mak quirks.
+  # The 13 architectures, as mcm target triples + per-arch config.mak quirks.
   arches = {
     armel        = { target = "arm-linux-musleabi"; };
     armhf        = { target = "arm-linux-musleabihf"; };
@@ -122,12 +122,27 @@ rec {
     powerpcle    = { target = "powerpcle-linux-musl"; };
     powerpc64    = { target = "powerpc64-linux-musl"; };
     powerpc64le  = { target = "powerpc64le-linux-musl"; };
+    riscv64      = { target = "riscv64-linux-musl"; };
     x86_64       = { target = "x86_64-linux-musl"; };
   };
+
+  # NOTE loongarch64 is deliberately ABSENT from `arches`, which is the
+  # musl-cross-make cartesian source. It cannot be built by that path at all:
+  # musl gained loongarch64 in 1.2.5 and every era here pins <= 1.2.4, and
+  # Bootlin ships no loongarch64 toolchain at ANY release (probed across every
+  # dir/libc/release combination). The rehosting Docker image sources it as a
+  # hand-installed glibc cross at /opt/cross/loongarch64-linux-gcc-cross —
+  # i.e. it is exactly the apt/opt-installed gap class the nixification is
+  # meant to close. It needs a third sourcing path; see README.
 
   # (era, arch) pairs to skip — e.g. arches that didn't exist / lack a musl port
   # in an era. Keyed "<era>.<arch>".
   unsupported = [
     # "k2.6.arm64"   # aarch64 predates 2.6-era musl; fill in as discovered
+
+    # riscv64 upstream Linux support starts at 4.15, and musl's riscv64 port
+    # starts at 1.2.0 — both eras below pin musl 1.1.24. Nothing to build.
+    "k2.6.riscv64"
+    "k3.riscv64"
   ];
 }
