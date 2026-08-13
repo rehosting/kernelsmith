@@ -1,7 +1,7 @@
 # Module-build validation: prove the `dev` output of buildKernel is a build tree
 # an out-of-tree module can actually compile against.
 #
-#   nix-build validate-module.nix -A k6      # one band
+#   nix-build validate-module.nix -A k26     # one band (k2.6 -> k26; nix splits -A on ".")
 #   nix-build validate-module.nix -A all     # every band
 #
 # This exists because the failure mode is quiet and late. A broken kernel-devel
@@ -105,7 +105,12 @@ let
       grep -q 'MIPS' $out || { echo "${band}: wrong architecture" >&2; exit 1; }
     '';
 
-  checks = lib.genAttrs (builtins.attrNames bands) checkBand;
+  # Attr names are band keys with the dot removed ("k2.6" -> "k26"), matching
+  # boot.nix's bandKey. A literal "k2.6" attr is reachable only as
+  # `-A '"k2.6"'`, since nix splits -A on '.'.
+  checks = lib.listToAttrs (map
+    (b: lib.nameValuePair (lib.replaceStrings [ "." ] [ "" ] b) (checkBand b))
+    (builtins.attrNames bands));
 
 in
 checks // {
