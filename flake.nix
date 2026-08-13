@@ -121,9 +121,14 @@
       # Resolve a toolchain straight from a kernel version + arch, for callers
       # (igloo_driver module builds, ad-hoc shells) that just want the compiler.
       toolchainFor = resolveToolchain;
+
+      # Layer 3 over buildKernel: build an out-of-tree module against a kernel
+      # this flake produced. Takes the kernel DERIVATION, so a module and the
+      # kernel it loads into cannot drift apart. See module.nix.
+      buildModule = import ./module.nix { inherit pkgs; };
     in
     {
-      inherit buildKernel toolchainFor;
+      inherit buildKernel buildModule toolchainFor;
 
       packages.${system} = toolchains // {
         # Every pinned Bootlin cell (k3/k4/k6 × covered arches) — all buildable now.

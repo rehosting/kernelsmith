@@ -224,6 +224,18 @@ stdenv.mkDerivation {
   pname = "linux-${arch}";
   inherit version src;
 
+  # `out` is the kernel; `dev` is the build tree an out-of-tree module compiles
+  # against (Makefile, .config, Module.symvers, headers, arch Makefiles,
+  # scripts/ host tools). They are separate outputs because the build tree is
+  # large and most consumers want only the image.
+  #
+  # The output MUST be named literally "dev". nixpkgs' multiple-outputs setup
+  # hook runs `moveToOutput include "$outputDev"`, and `outputDev` falls back to
+  # "out" unless some output is literally named "dev". Name it "devel" and the
+  # hook silently relocates the build tree's include/ into $out -- yielding a
+  # build tree with no headers, which fails much later, in the consumer.
+  outputs = [ "out" "dev" ];
+
   # ccShim FIRST so its -Wno-error gcc/cc wrappers shadow the real toolchain's
   # (ld/as/etc. fall through to `toolchain`, later on PATH).
   nativeBuildInputs = [ ccShim toolchain ] ++ (with pkgs; [
@@ -341,8 +353,49 @@ stdenv.mkDerivation {
       make $makeFlags INSTALL_MOD_PATH=$out modules_install
     ''}
     make $makeFlags INSTALL_HDR_PATH=$out/kernel-devel headers_install
+
+    # --- $dev: the build tree out-of-tree modules compile against ------------
+    #
+    # NOT the same thing as $out/kernel-devel above. headers_install emits the
+    # sanitized UAPI headers a *userspace* program includes; a module build needs
+    # the kbuild machinery -- Makefile, .config, Module.symvers, the internal
+    # (non-UAPI) headers, the arch Makefiles, and the scripts/ host tools that
+    # were built here with this kernel's toolchain.
+    #
+    # kernelsmith builds in-tree, so the source tree after `make` IS the build
+    # tree; this stages the parts a module build reads.
+    #
+    # `modules_prepare` is a no-op after a full build but is cheap and makes the
+    # tree valid even when buildModules = false.
+    make $makeFlags ${hostFlagArg} modules_prepare
+
+    mkdir -p $dev
+    cp .config $dev/
+    cp Module.symvers $dev/ 2>/dev/null || true
+    cp Makefile $dev/
+    cp Kbuild $dev/ 2>/dev/null || true
+    cp Kconfig $dev/ 2>/dev/null || true
+    cp -r include $dev/
+    mkdir -p $dev/arch
+    cp -r arch/${kernelArch} $dev/arch/
+    cp -r scripts $dev/
+
+    chmod -R u+w $dev
+
+    # Boot images and realmode blobs are never read by a module build and are a
+    # large share of the tree.
+    rm -rf $dev/arch/*/boot $dev/arch/*/realmode || true
+
+    # objtool is the one thing under tools/ that kbuild may run on module
+    # objects (CONFIG_STACK_VALIDATION / OBJTOOL). Ship it if it was built;
+    # skip the rest of tools/, which is perf, bpftool, selftests and friends.
+    if [ -d tools/objtool ]; then
+      mkdir -p $dev/tools
+      cp -r tools/objtool $dev/tools/
+    fi
+
     runHook postInstall
   '';
 
-  passthru = { inherit eraName toolchain; cross = crossPrefix; bootImageFile = if bootImage != null then baseNameOf bootImage.file else "vmlinux"; };
+  passthru = { inherit eraName toolchain kernelArch crossPrefix; cross = crossPrefix; bootImageFile = if bootImage != null then baseNameOf bootImage.file else "vmlinux"; };
 }
