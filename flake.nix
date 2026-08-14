@@ -99,7 +99,49 @@
 
       # Canonical toolchain set: vendored Bootlin where pinned, musl-cross-make
       # otherwise. Both keyed "<era>-<arch>", so Bootlin simply overrides.
-      toolchains = mcmToolchains // bootlinToolchains;
+      #
+      # ...EXCEPT k4-x86_64, which is overridden back to the k3 cell. This is a
+      # BINUTILS constraint, not a gcc one, and it is the sharpest one in the
+      # matrix:
+      #
+      #   binutils 2.31 started emitting R_X86_64_PLT32 where it used to emit
+      #   R_X86_64_PC32. Linux did not learn that relocation until 4.16
+      #   (b21ebf2fb4cd, "x86: Treat R_X86_64_PLT32 as R_X86_64_PC32"). Every
+      #   x86_64 kernel older than that, built by binutils >= 2.31, is a kernel
+      #   that links, packages, has the correct ELF shape and size -- and does
+      #   not boot. It decompresses and goes silent before console init.
+      #
+      # linux_builder shipped exactly that in nixdev_0.1.0 (4.10/x86_64), and it
+      # surfaced three repos downstream in penguin's integration tests. Bootlin's
+      # k4 x86_64 cell is 2021.11-5: gcc 10.3, binutils 2.36.1.
+      #
+      # It was NOT news to this stack. rehosting/embedded-toolchains -- the
+      # Docker image kernelsmith replaces -- hand-built an `x86_64-legacy`
+      # toolchain for precisely this, pinning **binutils 2.30**, the last
+      # release before 2.31:
+      #
+      #     wget .../binutils-2.30.tar.xz && ../configure --target=x86_64-linux-musl
+      #     wget .../gcc-6.5.0.tar.xz     && ../configure --target=x86_64-linux-musl
+      #
+      # and _in_container_build.sh hard-coded it for (x86_64, 4.10) alone. That
+      # knowledge lived in a Dockerfile stanza with no comment saying why; here
+      # it is a resolver decision with the reason attached.
+      #
+      # k3 is that toolchain: gcc 6.5.0 (the same version embedded-toolchains
+      # chose) and binutils 2.27 (equally pre-2.31), on the same
+      # x86_64-linux-musl triple. No new cell needed -- point at the one that
+      # already exists.
+      #
+      # LIMITATION, and it is a real one: this pins the whole k4 BAND for x86_64,
+      # and k4 spans 4.x AND 5.x. A 5.10 x86_64 kernel does not need binutils
+      # <2.31 and would rather have the newer toolchain. The resolver is keyed
+      # (era, arch) and cannot say "4.x needs this, 5.x needs that" -- see the
+      # binutils-era note in matrix.nix. Correct answer is a finer band; this is
+      # the correct answer available today, and boot.nix's k4-x86_64 cell (5.10)
+      # is what proves it does not regress the other half of the band.
+      toolchains = mcmToolchains // bootlinToolchains // {
+        "k4-x86_64" = mcmToolchains."k3-x86_64";
+      };
 
       # THE toolchain resolver — the single source of truth for (version, arch) ->
       # compiler. A period-correct KERNEL-only toolchain (kernelToolchains: the

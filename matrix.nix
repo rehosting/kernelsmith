@@ -80,6 +80,53 @@ rec {
     gccVer = "6.5.0"; binutilsVer = "2.27";
     gmpVer = "6.1.2"; mpcVer = "1.1.0"; mpfrVer = "4.0.2";
   };
+
+  # ---- BINUTILS IS AN ERA CONSTRAINT TOO, AND WE ONLY HALF-ENFORCE IT --------
+  #
+  # `eras` above declares a binutilsVer per band, and that declaration is
+  # honoured on exactly ONE of the two sourcing paths:
+  #
+  #   * musl-cross-make cells  -> built from eras.<band>.binutilsVer. Enforced.
+  #   * Bootlin cells          -> whatever binutils that Buildroot release
+  #                               happened to ship. NOT enforced, NOT recorded,
+  #                               and not visible without building the toolchain
+  #                               and running `ld --version`.
+  #
+  # Most of k3/k4/k6 is Bootlin, so for most of the matrix the declared
+  # binutilsVer is documentation rather than a constraint. k4 declares 2.33.1;
+  # its Bootlin x86_64 cell (2021.11-5) actually ships 2.36.1.
+  #
+  # That gap is not cosmetic. The gcc upper bound gets all the attention because
+  # it produces loud compile errors, but a binutils that is too NEW fails
+  # silently and later:
+  #
+  #   binutils 2.31 emits R_X86_64_PLT32 where it used to emit R_X86_64_PC32.
+  #   Linux learned that relocation in 4.16 (b21ebf2fb4cd). Build any older
+  #   x86_64 kernel with binutils >= 2.31 and you get a kernel that compiles,
+  #   links, packages, passes an ELF shape check at the right size -- and does
+  #   not boot. No diagnostic, at build time or at boot.
+  #
+  # linux_builder shipped one (nixdev_0.1.0, 4.10/x86_64). It was found three
+  # repos downstream. See flake.nix's k4-x86_64 override for the fix and for
+  # what rehosting/embedded-toolchains did about it before us (it hand-built a
+  # binutils-2.30 toolchain and hard-coded it for this one cell).
+  #
+  # TWO THINGS ARE STILL OWED HERE:
+  #
+  #  1. Enforce (or at least RECORD) the binutils version of every Bootlin cell,
+  #     so a vendored toolchain silently carrying a newer binutils than its band
+  #     declares is a build error rather than a downstream boot failure.
+  #
+  #  2. Give the resolver finer bands. It is keyed (era, arch), and k4 spans 4.x
+  #     AND 5.x -- so "4.10 needs binutils <2.31" cannot be said without also
+  #     saying it for 5.10, which does not need it. Every fix at this
+  #     granularity over-applies. The x86 PLT32 boundary (kernel 4.16) does not
+  #     line up with any band edge, and it will not be the last one that
+  #     doesn't.
+  #
+  # Both are why boot.nix exists: a boot test is the only thing that catches
+  # this class at all, and until (1) and (2) land it is the only thing that
+  # will.
   # Arches PROVEN to build a 2.6.31 kernel on this toolchain (README band sweep).
   # Plain -linux triples (no libc). armel is bare arm-linux-gnueabi (ARMv5 default,
   # boots the versatilepb ARMv5 board); armhf adds --with-arch=armv7-a so the
