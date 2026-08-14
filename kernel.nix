@@ -394,6 +394,51 @@ stdenv.mkDerivation {
       cp -r tools/objtool $dev/tools/
     fi
 
+    # --- slim to what an `M=` build actually reads ---------------------------
+    #
+    # kernelsmith builds in-tree, so the staged tree is a *build directory*, not
+    # a devel tree: it carries the kernel's own sources and every object and
+    # .cmd file the build produced. An external module build compiles ITS OWN
+    # sources against these headers plus Module.symvers, and never reads in-tree
+    # .c, prebuilt .o, or the .cmd dependency stubs. Shipping them made the
+    # aggregate devel archive in a downstream consumer 479 MB against the
+    # 253 MB of the shell build it replaced -- 89% larger for bytes nothing
+    # opens. This is the same slimming every distro's kernel-devel package does.
+    #
+    # Three exceptions, each load-bearing:
+    #
+    #  * arch/powerpc/lib/crtsavres.o -- ppc32 puts this in KBUILD_LDFLAGS_MODULE
+    #    as a BARE RELATIVE PATH, resolved against cwd, which under `M=` is the
+    #    module directory rather than the kernel tree. buildModule stages it in
+    #    before building for exactly this reason; delete it here and every ppc32
+    #    module link fails with "cannot find arch/powerpc/lib/crtsavres.o".
+    #  * scripts/ -- host tools (fixdep, modpost, genksyms...) plus the sources
+    #    kbuild may rebuild them from.
+    #  * tools/ -- objtool, same reasoning.
+    # Whether crtsavres.o is built is a CONFIG_PPC32 property, not an arch one:
+    # kernelArch is "powerpc" for ppc64 too, where the file does not exist. So
+    # assert on what was actually there rather than on the arch name, which
+    # would fail every powerpc64 build.
+    had_crtsavres=0
+    [ -f $dev/arch/powerpc/lib/crtsavres.o ] && had_crtsavres=1
+
+    find $dev -name '*.cmd' -delete
+    find $dev -name '*.o' \
+      ! -path "$dev/arch/powerpc/lib/crtsavres.o" \
+      ! -path "$dev/scripts/*" \
+      ! -path "$dev/tools/*" -delete
+    find $dev -name '*.c' \
+      ! -path "$dev/scripts/*" \
+      ! -path "$dev/tools/*" -delete
+
+    # Fail loudly rather than ship a tree that cannot link ppc32 modules: that
+    # file is one `!`-clause away from being deleted by the rule above, and the
+    # breakage would otherwise only surface as a link error in a consumer.
+    if [ "$had_crtsavres" = 1 ] && [ ! -f $dev/arch/powerpc/lib/crtsavres.o ]; then
+      echo "FAIL: crtsavres.o was slimmed out of \$dev; ppc32 module links need it" >&2
+      exit 1
+    fi
+
     runHook postInstall
   '';
 
